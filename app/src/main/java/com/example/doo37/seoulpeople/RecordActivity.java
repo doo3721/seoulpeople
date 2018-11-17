@@ -39,7 +39,7 @@ public class RecordActivity extends AppCompatActivity {
     private MediaPlayer mr;
     private InputStream is_txt;
     ArrayList<String> r_sentences = new ArrayList<>();      // 저장 된 녹음 문장 배열
-    ArrayList<String> sentences = new ArrayList<>();     // 문장 파일의 문장 배열
+    ArrayList<String> t_sentences = new ArrayList<>();     // 문장 파일의 문장 배열
 
     // 차트 관련 선언
     LineChart chart;
@@ -67,6 +67,7 @@ public class RecordActivity extends AppCompatActivity {
 
         // 음성인식을 위한 Intent 설정
         i_speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        i_speech.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         i_speech.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         i_speech.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR");
 
@@ -93,6 +94,7 @@ public class RecordActivity extends AppCompatActivity {
 
         }
 
+        t_sentences.add(v_txt);
         tv_sentence.setText(v_txt);
         bt_record.setEnabled(false);
 
@@ -120,10 +122,12 @@ public class RecordActivity extends AppCompatActivity {
     private RecognitionListener recognitionListener = new RecognitionListener() {
         @Override
         public void onReadyForSpeech(Bundle bundle) {
+            Log.d("메세지: ", "준비");
         }
 
         @Override
         public void onBeginningOfSpeech() {
+            Log.d("메세지: ", "시작");
         }
 
         @Override
@@ -136,6 +140,7 @@ public class RecordActivity extends AppCompatActivity {
 
         @Override
         public void onEndOfSpeech() {
+            Log.d("메세지: ", "종료");
         }
 
         // 에러 호출
@@ -150,17 +155,22 @@ public class RecordActivity extends AppCompatActivity {
             tv_stt.setText("");
             ArrayList<String> s_sentence = (ArrayList<String>) results.get(SpeechRecognizer.RESULTS_RECOGNITION);
 
-            for(int i=0; i<s_sentence.size(); i++) {
-                r_sentences.add(s_sentence.get(i));
-                tv_stt.setText(s_sentence.get(i) + " ");
-            }
-
+            // 0번이 가장 신뢰도 높은 결과
+            r_sentences.add(s_sentence.get(0));
             r_sentences.add(" / ");
+
+            tv_stt.setText(s_sentence.get(0));
             bt_record.setEnabled(true);
         }
 
         @Override
-        public void onPartialResults(Bundle bundle) {
+        public void onPartialResults(Bundle parts) {
+            ArrayList<String> s_parts = (ArrayList<String>) parts.get(SpeechRecognizer.RESULTS_RECOGNITION);
+            String s_temp = "";
+            for (int i=0; i<s_parts.size(); i++) {
+                s_temp += s_parts.get(i);
+            }
+            tv_stt.setText(s_temp);
         }
 
         @Override
