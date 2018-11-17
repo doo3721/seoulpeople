@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">SeoulPeople</string>
+
+    <string name="title_activity_welcome">Home Screen</string>
+    <string name="next">NEXT</string>
+    <string name="skip">SKIP</string>
+    <string name="start">GOT IT</string>
+
+    <string name="slide_1_title">Hello SeoulPeople!</string>
+    <string name="slide_1_desc">example</string>
+
+    <string name="slide_2_title">How to Use</string>
+    <string name="slide_2_desc">example</string>
+
+    <string name="slide_3_title">Great Effect</string>
+    <string name="slide_3_desc">example</string>
+
+    <string name="play_again_desc">To see the welcome slider again, goto Settings -> apps -> welcome slider -> clear data</string>
+    <string name="play_again">Play Again</string>
+    <string name="todo">TODO</string>
+
+</resources>
