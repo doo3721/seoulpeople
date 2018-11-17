@@ -20,11 +20,10 @@
             android:layout_weight="20"
             android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/imageView6"
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/resultchart"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:srcCompat="@drawable/graphbg" />
+                android:layout_height="match_parent" />
         </LinearLayout>
 
         <LinearLayout
@@ -51,11 +50,11 @@
             android:layout_weight="60"
             android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/imageView10"
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/stackchart"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:srcCompat="@drawable/graphbg" />
+                android:layout_height="match_parent" />
+
         </LinearLayout>
 
         <LinearLayout
@@ -66,7 +65,7 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:id="@+id/imageView7"
+                android:id="@+id/Endbutton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
