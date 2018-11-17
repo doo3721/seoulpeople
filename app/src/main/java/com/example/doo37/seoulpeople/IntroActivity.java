@@ -7,7 +7,6 @@ import android.view.View;
 
 import com.github.paolorotolo.appintro.AppIntro;
 
-import androidx.annotation.Nullable;
 
 /**
  * Created by heejinLee

@@ -34,7 +34,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0-alpha'
+    implementation 'com.github.PhilJay:MPAndroidChart:v2.2.4'
     implementation 'com.github.paolorotolo:appintro:v4.1.0'
     implementation 'android.arch.work:work-runtime:1.0.0-alpha08'
 }
