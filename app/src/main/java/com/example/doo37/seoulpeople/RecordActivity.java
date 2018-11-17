@@ -28,6 +28,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.w3c.dom.Text;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class RecordActivity extends AppCompatActivity {
 
@@ -157,6 +159,21 @@ public class RecordActivity extends AppCompatActivity {
 
             r_sentences.add(" / ");
             bt_record.setEnabled(true);
+
+
+            new Timer().schedule(
+                    new TimerTask(){
+
+                        @Override
+                        public void run(){
+
+                            //if you need some code to run when the delay expires
+                        }
+
+                    }, 10);
+            Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
+            startActivity(intent);
+            finish();
         }
 
         @Override
