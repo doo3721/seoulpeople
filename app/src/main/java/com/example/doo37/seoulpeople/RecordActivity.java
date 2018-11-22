@@ -10,6 +10,9 @@ import android.speech.RecognitionListener;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -30,6 +33,13 @@ import java.util.ArrayList;
 import org.w3c.dom.Text;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import java.util.LinkedList;
+import com.example.doo37.seoulpeople.diff_match_patch;
+
+import static com.example.doo37.seoulpeople.diff_match_patch.Operation.DELETE;
+import static com.example.doo37.seoulpeople.diff_match_patch.Operation.EQUAL;
+import static com.example.doo37.seoulpeople.diff_match_patch.Operation.INSERT;
 
 public class RecordActivity extends AppCompatActivity {
 
@@ -54,6 +64,17 @@ public class RecordActivity extends AppCompatActivity {
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
 
+    // 문자열 매칭 알고리즘 선언부
+    diff_match_patch dmp = new diff_match_patch();
+
+    // 비교 부분에서 사용해야 하기 때문에 v_txt 옮김
+    String v_txt = "";
+
+    private TextView tv_compare;
+    ArrayList<String> t_compare = new ArrayList<>();
+    String c_txt = "";
+
+    SpannableStringBuilder ssb = new SpannableStringBuilder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +84,9 @@ public class RecordActivity extends AppCompatActivity {
         // TextView, Button 객체 연동
         tv_stt = (TextView) findViewById(R.id.tv_stt);
         tv_sentence = (TextView) findViewById(R.id.tv_sentence);
+
+        // 비교 텍스트 출력
+        tv_compare = (TextView) findViewById(R.id.tv_compare);
 
         bt_record = (ImageView) findViewById(R.id.bt_record);
         // At unexpected error occured, I dont know where this buttion should be.
@@ -78,6 +102,8 @@ public class RecordActivity extends AppCompatActivity {
         sr.setRecognitionListener(recognitionListener);
 
         init(); // 차트 생성 및 옵션 부여
+
+
     }
 
     // 녹음 버튼 클릭 이벤트
@@ -86,7 +112,6 @@ public class RecordActivity extends AppCompatActivity {
         threadStart(); // 차트에 데이터 넣을 스레드 실행
 
         // 텍스트 호출
-        String v_txt = "";
         try {
             is_txt = getResources().openRawResource(R.raw.txt1);
             byte[] b = new byte[is_txt.available()];
@@ -175,9 +200,42 @@ public class RecordActivity extends AppCompatActivity {
                         }
 
                     }, 10);
-            Intent intent = new Intent(getApplicationContext(), ResultActivity.class);
-            startActivity(intent);
-            finish();
+
+
+            // 두 텍스트 비교 알고리즘 사용 부분
+
+            LinkedList<diff_match_patch.Diff> diff = dmp.diff_main(s_sentence.get(0), v_txt);
+
+            ArrayList<String> cmp_temp = new ArrayList<>();
+
+            dmp.diff_cleanupEfficiency(diff);
+
+            String c_txt = "";
+
+            try {
+                for (diff_match_patch.Diff d : diff) {
+                    if (d.operation == diff_match_patch.Operation.INSERT) {
+                        c_txt = c_txt + " " + d.text;
+                    }
+                    else if (d.operation == diff_match_patch.Operation.EQUAL) {
+                        c_txt = c_txt + " " + d.text;
+                        cmp_temp.add(d.text);
+                    }
+                }
+            } catch (Exception e) {
+            }
+
+            SpannableStringBuilder ssb = new SpannableStringBuilder(c_txt);
+
+            for (int j = 0; j < cmp_temp.size(); j++) {
+                if (c_txt.contains(cmp_temp.get(j))) {
+                    int i = c_txt.indexOf(cmp_temp.get(j));
+                    ssb.setSpan(new ForegroundColorSpan(Color.parseColor("#5F00FF")), i, i + cmp_temp.get(j).length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+
+            tv_compare.setText("");
+            tv_compare.append(ssb);
         }
 
         @Override
