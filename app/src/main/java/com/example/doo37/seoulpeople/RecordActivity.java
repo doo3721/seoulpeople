@@ -2,6 +2,7 @@ package com.example.doo37.seoulpeople;
 
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.media.audiofx.Visualizer;
 import android.os.Handler;
 import android.os.Message;
 import android.speech.SpeechRecognizer;
@@ -39,9 +40,14 @@ public class RecordActivity extends AppCompatActivity {
     private ImageView bt_record;
     private SpeechRecognizer sr;
     private MediaPlayer mr;
+    private Visualizer vl;
     private InputStream is_txt;
     ArrayList<String> r_sentences = new ArrayList<>();      // 저장 된 녹음 문장 배열
     ArrayList<String> t_sentences = new ArrayList<>();     // 문장 파일의 문장 배열
+    ArrayList<Float> rmsList = new ArrayList<>();           // 음성 rms수치 리스트
+    float changedRMS;
+
+    Timer sTimer;
 
     // 차트 관련 선언
     LineChart chart;
@@ -53,6 +59,8 @@ public class RecordActivity extends AppCompatActivity {
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
+
+    private final int MY_AUDIOSESSION = 0;
 
 
     @Override
@@ -72,6 +80,21 @@ public class RecordActivity extends AppCompatActivity {
         i_speech.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         i_speech.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         i_speech.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR");
+
+        vl = new Visualizer(MY_AUDIOSESSION);
+        vl.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
+        vl.setEnabled(true);
+
+        sTimer = new Timer();
+        sTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Visualizer.MeasurementPeakRms mpr = new Visualizer.MeasurementPeakRms();
+                vl.getMeasurementPeakRms(mpr);
+                float rms = (float) (mpr.mRms);
+                Log.d("RMS:", " " + rms);
+            }
+        }, 0, 100);
 
         // SpeechRecognizer 설정
         sr = SpeechRecognizer.createSpeechRecognizer(this);
@@ -108,6 +131,8 @@ public class RecordActivity extends AppCompatActivity {
             public void onCompletion(MediaPlayer mp) {
                 mp.stop();
                 mp.release();
+                sTimer.cancel();
+                sTimer.purge();
                 // stt 호출
                 sr.startListening(i_speech);
             }
@@ -134,6 +159,9 @@ public class RecordActivity extends AppCompatActivity {
 
         @Override
         public void onRmsChanged(float v) {
+            // Log.d("RMS:", " " + v);
+            rmsList.add(v);
+            changedRMS = v;
         }
 
         @Override
@@ -247,7 +275,7 @@ public class RecordActivity extends AppCompatActivity {
     }
 
     // 차트 업데이트 함수
-    public void chartUpdate(int x) {
+    public void chartUpdate(float x) {
 
         if (xVal.size() > DATA_RANGE) {
             xVal.remove(0);
@@ -267,9 +295,7 @@ public class RecordActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == 0) {
-                int a = 0;
-                a = (int)(Math.random()*100);
-                chartUpdate(a);
+                chartUpdate(changedRMS);
             }
         }
     };
