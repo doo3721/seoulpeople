@@ -115,7 +115,8 @@ public class RecordActivity extends AppCompatActivity {
             public void run() {
                 Visualizer.MeasurementPeakRms mpr = new Visualizer.MeasurementPeakRms();
                 vl.getMeasurementPeakRms(mpr);
-                float rms = (float) (mpr.mRms);
+                float maxmin = (float) ((-4500.0) - (-9600.0));
+                float rms = (float) ((mpr.mRms - (-9600.0)) / maxmin);
                 Log.d("RMS:", " " + rms);
             }
         }, 0, 100);
@@ -125,8 +126,6 @@ public class RecordActivity extends AppCompatActivity {
         sr.setRecognitionListener(recognitionListener);
 
         init(); // 차트 생성 및 옵션 부여
-
-
     }
 
     // 녹음 버튼 클릭 이벤트
@@ -184,7 +183,8 @@ public class RecordActivity extends AppCompatActivity {
 
         @Override
         public void onRmsChanged(float v) {
-            // Log.d("RMS:", " " + v);
+            float rms = (float) ((v - (-2.0)) / (10.0 - (-2)));
+            Log.d("RMS:", " " + rms);
             rmsList.add(v);
             changedRMS = v;
         }
