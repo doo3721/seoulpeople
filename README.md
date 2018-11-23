@@ -35,7 +35,9 @@ These instructions will get you a copy of the project up and running on your mob
 
 ## Usage
 
-Not yet :)
+you can release apk file on your IDE, or just see the below video!
+
+![build-test](https://media.giphy.com/media/28FYueK7hXC1XF2lxc/giphy.gif)
 
 ---
 
