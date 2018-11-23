@@ -49,19 +49,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mSensor = new DetectNoise();
+
         // 레코딩 퍼미션 권한 요청
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 == PackageManager.PERMISSION_GRANTED) {
+            threadStart();
         }
         else {
+            boolean isGranted = true;
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
                     MY_PERMISSIONS_RECORD_AUDIO);
+            // 퍼미션 허용이 될 때까지 반복
+            while(isGranted) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    isGranted = false;
+                }
+            }
+            threadStart();
         }
 
-        mSensor = new DetectNoise();
-
         init();
-        threadStart();
 
         ImageView helpbutton = (ImageView) findViewById(R.id.question);
 
