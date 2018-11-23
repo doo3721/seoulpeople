@@ -49,6 +49,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // 레코딩 퍼미션 권한 요청
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                == PackageManager.PERMISSION_GRANTED) {
+        }
+        else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
+                    MY_PERMISSIONS_RECORD_AUDIO);
+        }
+
         mSensor = new DetectNoise();
 
         init();
@@ -82,16 +91,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        // 레코딩 퍼미션 권한 요청
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-
-        }
-        else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
-                    MY_PERMISSIONS_RECORD_AUDIO);
-        }
     }
 
     private void init(){

@@ -105,10 +105,12 @@ public class RecordActivity extends AppCompatActivity {
         i_speech.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         i_speech.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR");
 
+        // 음성 파일 RMS 측정을 위한 Visualizer 초기화
         vl = new Visualizer(MY_AUDIOSESSION);
         vl.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
         vl.setEnabled(true);
 
+        // 음성 파일 RMS 측정을 위한 timertask 생성
         sTimer = new Timer();
         sTimer.schedule(new TimerTask() {
             @Override
