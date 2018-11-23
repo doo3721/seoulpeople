@@ -71,7 +71,7 @@ you can release apk file on your IDE, or just see the below video!
 
 | HeeJin Lee | DooHee Kim | DoHyoung Lee | Sunghun Bak |
 | :---: |:---:| :---:| :---: |
-| <img src="https://avatars1.githubusercontent.com/u/9789023?s=460&v=4" width="70%"></img>    | <img src="https://avatars3.githubusercontent.com/u/34649424?s=400&v=4" width="70%"></img> |   |   |
+| <img src="https://avatars1.githubusercontent.com/u/9789023?s=460&v=4" width="70%"></img>    | <img src="https://avatars3.githubusercontent.com/u/34649424?s=400&v=4" width="70%"></img> |   |  <img src="https://avatars3.githubusercontent.com/u/34119627?s=400&v=4" width="100%"></img> |
 | [github.com/Leeheejin](https://github.com/Leeheejin "https://github.com/Leeheejin") | [github.com/doo3721](https://github.com/doo3721 "https://github.com/doo3721") | [github.com/doh01](https://github.com/doh01 "https://github.com/doh01") | [github.com/sg03142](https://github.com/sg03142 "https://github.com/sg03142") |
 
 - You can see team member and github profile
