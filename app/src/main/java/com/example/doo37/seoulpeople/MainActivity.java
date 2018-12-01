@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(
                         getApplicationContext(), IntroActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
             }
         });
 
@@ -97,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(
                         getApplicationContext(), RecordActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
             }
         });
     }

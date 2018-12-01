@@ -118,6 +118,8 @@ public class RecordActivity extends AppCompatActivity {
         bt_end.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
 
+                // rms stop
+                sr.stopListening();
                 finish();
                 //키 값으로 String이라는 이름을 지정하며 , 두번째 인자로 전송할 데이터 변수 지정   .putExtra("key",value);
                 Intent intent = new Intent(getApplicationContext(),ResultActivity.class);   //첫번째 인자 나의 클래스명, 두번째 인자 이동할 클래스명
@@ -128,6 +130,7 @@ public class RecordActivity extends AppCompatActivity {
                 //IntentPage Activity에 데이터를 전달.
 
                 startActivity(intent);  //인텐트를 시작한다.
+                overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
             }
         });
 
@@ -222,7 +225,10 @@ public class RecordActivity extends AppCompatActivity {
     // 다시 버튼 클릭 이벤트
     public void replayListener(View v) {
         finish();
+        // rms stop
+        sr.stopListening();
         startActivity(new Intent(this, RecordActivity.class));
+        this.overridePendingTransition(0, 0);
     }
 
     // SpeechRecognizer의 이벤트 메소드 설정
@@ -263,11 +269,18 @@ public class RecordActivity extends AppCompatActivity {
         // 녹음 후 결과 출력, 녹음 문장 저장
         @Override
         public void onResults(Bundle results) {
+
+
+
             tv_stt.setText("");
             ArrayList<String> s_sentence = (ArrayList<String>) results.get(SpeechRecognizer.RESULTS_RECOGNITION);
 
             // 0번이 가장 신뢰도 높은 결과
             r_sentences.add(s_sentence.get(0));
+
+            // rms stop
+            sr.stopListening();
+
             r_sentences.add(" / ");
 
             tv_stt.setText(s_sentence.get(0));
@@ -282,6 +295,7 @@ public class RecordActivity extends AppCompatActivity {
             dmp.diff_cleanupEfficiency(diff);
 
             String c_txt = "";
+            String c_txt2 = "";
             usrsLength = 0;
             stdsLength = 0;
 
@@ -289,26 +303,30 @@ public class RecordActivity extends AppCompatActivity {
                 for (diff_match_patch.Diff d : diff) {
                     if (d.operation == diff_match_patch.Operation.INSERT) {
                         c_txt = c_txt + " " + d.text;
+                        c_txt2= c_txt2 + d.text;
                     }
                     else if (d.operation == diff_match_patch.Operation.EQUAL) {
                         c_txt = c_txt + " " + d.text;
+                        c_txt2= c_txt2 + d.text;
                         cmp_temp.add(d.text);
+                        usrsLength = usrsLength + d.text.length();
                     }
                 }
             } catch (Exception e) {
             }
+
+            stdsLength = c_txt2.length() - 1;
 
             SpannableStringBuilder ssb = new SpannableStringBuilder(c_txt);
 
             for (int j = 0; j < cmp_temp.size(); j++) {
                 if (c_txt.contains(cmp_temp.get(j))) {
                     int i = c_txt.indexOf(cmp_temp.get(j));
-                    usrsLength = usrsLength + cmp_temp.get(j).length();
                     ssb.setSpan(new ForegroundColorSpan(Color.parseColor("#5F00FF")), i, i + cmp_temp.get(j).length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             }
 
-            setstdsLength(c_txt.length() - usrsLength);
+            setstdsLength(stdsLength);
             setusrsLength(usrsLength);
 
             // 문자열 비교를 위한 테스트 구문

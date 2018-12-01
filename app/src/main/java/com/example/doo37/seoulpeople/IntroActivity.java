@@ -122,6 +122,7 @@ public class IntroActivity extends AppCompatActivity {
     private void launchHomeScreen() {
         finish();
         startActivity(new Intent(IntroActivity.this, MainActivity.class));
+        overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
     }
 
     //  viewpager change listener

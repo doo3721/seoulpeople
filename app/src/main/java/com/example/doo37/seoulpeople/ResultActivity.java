@@ -207,7 +207,7 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
             long now = System.currentTimeMillis();
             Date date = new Date(now);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HH-mm-ss-SSS");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
             String savedate = sdf.format(date);
 
             // 임시로 임의 값을 string화 해서 저장
