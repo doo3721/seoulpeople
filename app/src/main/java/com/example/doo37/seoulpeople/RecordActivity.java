@@ -92,6 +92,9 @@ public class RecordActivity extends AppCompatActivity {
     private int stdsLength;
     private int usrsLength;
 
+    // 음성 일치율 검사를 위한 변수 목록
+    // TODO: 음성 일치율 계산
+
     SpannableStringBuilder ssb = new SpannableStringBuilder();
 
     @Override

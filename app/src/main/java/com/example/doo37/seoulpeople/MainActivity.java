@@ -42,8 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private Context ct = this;
     private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
 
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

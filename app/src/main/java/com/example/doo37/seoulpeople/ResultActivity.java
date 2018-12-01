@@ -1,5 +1,8 @@
 package com.example.doo37.seoulpeople;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Message;
@@ -23,8 +26,11 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ResultActivity extends AppCompatActivity {
 
@@ -50,16 +56,29 @@ public class ResultActivity extends AppCompatActivity {
     ArrayList<IBarDataSet> barDataSets;
     BarData barData;
 
-    // 일치율 관련 뷰
+    // 문장 일치율 관련 뷰
     TextView voicediffv;
     TextView sentencediffv;
 
     String sentenceConsistency = "";
 
+    // 음성 일치율 검사를 위한 변수 목록
+    // TODO: 음성 일치율 계산
+
+    // 데이터 누적을 위한 변수 목록
+    // TODO: SQLite를 사용한 데이터 저장 및 불러오기
+
+    SQLiteDatabase sqliteDB ;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
+
+        // 누적 데이터 관련 SQLite 관리 부분
+        sqliteDB = init_database();
+        init_tables();
+        load_values();
 
         ImageView Endbutton = (ImageView) findViewById(R.id.Endbutton);
 
@@ -72,8 +91,6 @@ public class ResultActivity extends AppCompatActivity {
         });
 
         init(); // 차트 생성 및 옵션 부여
-
-        threadStart(); // 차트 업데이트 스레드
 
         voicediffv = (TextView)findViewById(R.id.voicediff);
         sentencediffv = (TextView)findViewById(R.id.sentencedif);
@@ -97,8 +114,79 @@ public class ResultActivity extends AppCompatActivity {
         Toast.makeText(getApplication(), sentenceConsistency, Toast.LENGTH_LONG).show();
         sentencediffv.setText(sentenceConsistency);
 
+        // 현재 실행한 테스트를 DB에 저장
+        save_values();
     }
 
+    private SQLiteDatabase init_database() {
+        SQLiteDatabase db = null;
+
+        // File file = getDatabasePath("contact.db") ;
+        File file = new File(getFilesDir(), "contact.db");
+
+        System.out.println("PATH : " + file.toString()) ;
+
+        try {
+            db = SQLiteDatabase.openOrCreateDatabase(file, null);
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
+        if (db == null) {
+            System.out.println("DB creation failed. " + file.getAbsolutePath());
+        } return db;
+    }
+
+    private void init_tables() {
+        if (sqliteDB != null) {
+            String sqlCreateTbl = "CREATE TABLE IF NOT EXISTS CONTACT_T (" +
+                    "Date " + "INTEGER NOT NULL," +
+                    "voiceC " +
+                    "sentenceC" + ")";
+            System.out.println(sqlCreateTbl);
+            sqliteDB.execSQL(sqlCreateTbl);
+        }
+    }
+
+    private void load_values() {
+        if (sqliteDB != null) {
+            String sqlQueryTbl = "SELECT * FROM CONTACT_T";
+            Cursor cursor = null;
+
+            // 쿼리 실행
+            cursor = sqliteDB.rawQuery(sqlQueryTbl, null);
+            if (cursor.moveToNext()) {
+                // 레코드가 존재한다면,
+
+                // 값 가져오기.
+                int date = cursor.getInt(0);
+                int voiceC = cursor.getInt(1);
+                int sentenceC = cursor.getInt(2);
+
+            }
+        }
+    }
+
+    private void save_values() {
+        if (sqliteDB != null) {
+
+            // delete
+            sqliteDB.execSQL("DELETE FROM CONTACT_T") ;
+
+            int date = 0;
+            int voiceC = 0;
+            int sentenceC = 0;
+
+            String sqlInsert = "INSERT INTO CONTACT_T " +
+                    "(date, voiceC, sentenceC) VALUES (" +
+                    Integer.toString(date) + "," +
+                    "'" + Integer.toString(voiceC) + "'," +
+                    "'" + Integer.toString(sentenceC) + "'," + ")" ;
+
+            System.out.println(sqlInsert) ;
+
+            sqliteDB.execSQL(sqlInsert) ;
+        }
+    }
 
     private void init() { // 차트 생성 함수
 
@@ -150,7 +238,7 @@ public class ResultActivity extends AppCompatActivity {
         linechart.invalidate();
 
         // Bar 차트 관련 옵션
-        barchart.setAutoScaleMinMaxEnabled(true);
+        //barchart.setAutoScaleMinMaxEnabled(true);
 
         // chart UI 옵션
         barchart.setBackgroundColor(Color.WHITE);
@@ -163,89 +251,82 @@ public class ResultActivity extends AppCompatActivity {
         barchart.getAxisLeft().setDrawGridLines(false);
         barchart.getAxisRight().setDrawGridLines(false);
 
-        barchart.getXAxis().setEnabled(false);
+        // X 축 항목별 (날짜, 시간 등) 표시
+        barchart.getXAxis().setEnabled(true);
 
+        // Y축 오른쪽 값 표시
         barchart.getAxisRight().setEnabled(false);
+
+        // Y축 값 표시
         barchart.getAxisLeft().setEnabled(false);
+
+        // 각 막대별 색상 표시 및 항목 이름 표시
         barchart.getLegend().setEnabled(false);
 
-        BAR_xVal = new ArrayList<BarEntry>();
-        BAR_setXcomp = new BarDataSet(BAR_xVal, "X");
-
-        // 그래프 선 관련 옵션
-        BAR_setXcomp.setColor(Color.BLUE);
-        BAR_setXcomp.setDrawValues(false);
-        BAR_setXcomp.setAxisDependency(YAxis.AxisDependency.LEFT);
-
-        barDataSets = new ArrayList<IBarDataSet>();
-        barDataSets.add(BAR_setXcomp);
-
-
-        BAR_xVals = new ArrayList<String>();
-        for (int i = 0; i < BAR_X_RANGE; i++) {
-            BAR_xVals.add("");
-        }
-        barData = new BarData(BAR_xVals,barDataSets);
-        barchart.setData(barData);
+        BarData bardata = new BarData(getXAxisValues(), getDataSet());
+        bardata.setDrawValues(false);
+        barchart.setScaleEnabled(false);
+        barchart.setData(bardata);
+        barchart.setVisibleXRangeMaximum(4); // allow 20 values to be displayed at once on the x-axis, not more
+        barchart.moveViewToX(20); // set the left edge of the chart to x-index 10
+                                        // moveViewToX(...) also calls invalidate()
+        barchart.animateXY(1000, 1000);
         barchart.invalidate();
 
     }
 
-    // 차트 업데이트 함수
-    public void chartUpdate(int x) {
+    private ArrayList<IBarDataSet> getDataSet() {
+        ArrayList<IBarDataSet> dataSets = null;
 
-        if (xVal.size() > DATA_RANGE) {
-            xVal.remove(0);
-            for (int i = 0; i < DATA_RANGE; i++) {
-                xVal.get(i).setXIndex(i);
-            }
-        }
+        ArrayList<BarEntry> valueSet2 = new ArrayList<>();
+        BarEntry v2e1 = new BarEntry(150.000f, 0); // (value, x index)
+        valueSet2.add(v2e1);
+        BarEntry v2e2 = new BarEntry(90.000f, 1);
+        valueSet2.add(v2e2);
+        BarEntry v2e3 = new BarEntry(120.000f, 2);
+        valueSet2.add(v2e3);
+        BarEntry v2e4 = new BarEntry(60.000f, 3);
+        valueSet2.add(v2e4);
+        BarEntry v2e5 = new BarEntry(20.000f, 4);
+        valueSet2.add(v2e5);
+        BarEntry v2e6 = new BarEntry(80.000f, 5);
+        valueSet2.add(v2e6);
+        BarEntry v2e7 = new BarEntry(150.000f, 6); // (value, x index)
+        valueSet2.add(v2e7);
+        BarEntry v2e8 = new BarEntry(90.000f, 7);
+        valueSet2.add(v2e8);
+        BarEntry v2e9 = new BarEntry(120.000f, 8);
+        valueSet2.add(v2e9);
+        BarEntry v2e10 = new BarEntry(60.000f, 9);
+        valueSet2.add(v2e10);
+        BarEntry v2e11 = new BarEntry(20.000f, 10);
+        valueSet2.add(v2e11);
+        BarEntry v2e12 = new BarEntry(80.000f, 11);
+        valueSet2.add(v2e12);
 
-        xVal.add(new Entry(x,xVal.size()));
-        setXcomp.notifyDataSetChanged();
-        linechart.notifyDataSetChanged();
-        linechart.invalidate();
+        BarDataSet barDataSet2 = new BarDataSet(valueSet2, "");
+        barDataSet2.setColors(ColorTemplate.COLORFUL_COLORS);
 
+        dataSets = new ArrayList<>();
+        dataSets.add(barDataSet2);
 
-        if (BAR_xVal.size() > BAR_DATA_RANGE) {
-            BAR_xVal.remove(0);
-            for (int i = 0; i < BAR_DATA_RANGE; i++) {
-                BAR_xVal.get(i).setXIndex(i);
-            }
-        }
-
-        BAR_xVal.add(new BarEntry(x,BAR_xVal.size()));
-        BAR_setXcomp.notifyDataSetChanged();
-        barchart.notifyDataSetChanged();
-        barchart.invalidate();
+        return dataSets;
     }
 
-    // 쓰레드 돌릴 핸들러
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-        }
-    };
-
-    // 쓰레드 상속 구문
-    class MyThread extends Thread {
-        @Override
-        public void run() {
-            while(true) {
-                handler.sendEmptyMessage(0);
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    // 쓰레드 시작 함수
-    private void threadStart() {
-        ResultActivity.MyThread thread = new ResultActivity.MyThread();
-        thread.setDaemon(true);
-        thread.start();
+    private ArrayList<String> getXAxisValues() {
+        ArrayList<String> xAxis = new ArrayList<>();
+        xAxis.add("2018-12-01");
+        xAxis.add("2018-12-02");
+        xAxis.add("2018-12-03");
+        xAxis.add("2018-12-04");
+        xAxis.add("2018-12-05");
+        xAxis.add("2018-12-06");
+        xAxis.add("2018-12-07");
+        xAxis.add("2018-12-08");
+        xAxis.add("2018-12-09");
+        xAxis.add("2018-12-10");
+        xAxis.add("2018-12-11");
+        xAxis.add("2018-12-12");
+        return xAxis;
     }
 }

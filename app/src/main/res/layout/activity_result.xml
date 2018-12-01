@@ -15,9 +15,9 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_height="200dp"
             android:layout_weight="20"
+            android:gravity="center"
             android:orientation="vertical">
 
             <com.github.mikephil.charting.charts.LineChart
@@ -55,9 +55,9 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
+            android:layout_height="200dp"
             android:layout_weight="60"
+            android:gravity="center"
             android:orientation="vertical">
 
             <com.github.mikephil.charting.charts.BarChart
