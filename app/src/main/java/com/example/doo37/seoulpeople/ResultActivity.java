@@ -8,6 +8,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -19,6 +21,7 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.DataSet;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -26,6 +29,9 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.interfaces.datasets.IDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.listener.ChartTouchListener;
+import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.github.mikephil.charting.listener.OnDrawListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.io.File;
@@ -34,7 +40,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class ResultActivity extends AppCompatActivity {
+public class ResultActivity extends AppCompatActivity implements OnChartValueSelectedListener,
+        OnDrawListener {
 
     // 차트 관련 선언
     LineChart linechart;
@@ -67,7 +74,6 @@ public class ResultActivity extends AppCompatActivity {
     // TODO: 음성 일치율 계산
 
     // 데이터 누적을 위한 변수 목록
-    // TODO: SQLite를 사용한 데이터 저장 및 불러오기
 
     SQLiteDatabase sqliteDB ;
 
@@ -78,7 +84,6 @@ public class ResultActivity extends AppCompatActivity {
 
         sqliteDB = init_database();
         init_tables();
-        // TODO:현재 실행한 테스트를 DB에 저장
 
         load_values();
 
@@ -153,7 +158,6 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private void load_values() {
-        // TODO: 액티비티 로드 시 barchart 에 표시될 데이터 로드하기
         if (sqliteDB != null) {
             String sqlQueryTbl = "SELECT * FROM CONTACT_T";
             Cursor cursor = null;
@@ -172,6 +176,7 @@ public class ResultActivity extends AppCompatActivity {
 
                 // 값 가져오기.
                 String date = cursor.getString(0);
+                // TODO: 액티비티 로드 시 barchart 에 표시될 데이터 로드하기
                 String voiceC = cursor.getString(1);
                 String sentenceC = cursor.getString(2);
 
@@ -206,6 +211,7 @@ public class ResultActivity extends AppCompatActivity {
             String savedate = sdf.format(date);
 
             // 임시로 임의 값을 string화 해서 저장
+            // TODO: 실제 음성 값을 처리할 것
             String voiceC = "3217";
 
             String sentenceC = sentenceConsistency;
@@ -278,6 +284,9 @@ public class ResultActivity extends AppCompatActivity {
         // chart UI 옵션
         barchart.setBackgroundColor(Color.WHITE);
         barchart.setDrawGridBackground(false);
+        barchart.setTouchEnabled(true);
+        barchart.setOnChartValueSelectedListener(this);
+        barchart.setOnDrawListener(this);
 
         barchart.setDescription("");
 
@@ -307,6 +316,62 @@ public class ResultActivity extends AppCompatActivity {
                                         // moveViewToX(...) also calls invalidate()
         barchart.animateXY(1000, 1000);
         barchart.invalidate();
+    }
+
+    @Override
+    public void onValueSelected(Entry e, int dataSetIndex, Highlight h) {
+        Log.i("VAL SELECTED",
+                "xindex: " + e.getXIndex() + "value:" + e.getVal() + "date : " + e.getData());
+
+
+        if (sqliteDB != null) {
+            String sqlQueryTbl = "SELECT * FROM CONTACT_T" + " WHERE sentenceC =" + e.getVal();
+
+            Cursor cursor = null;
+
+            dataSets = null;
+            valueSet = new ArrayList<>();
+            int i = 0;
+            xAxis = new ArrayList<>();
+
+            // 쿼리 실행
+            cursor = sqliteDB.rawQuery(sqlQueryTbl, null);
+            if(cursor.moveToFirst()){
+                String date = cursor.getString(0);
+                String voiceC = cursor.getString(1);
+                String sentenceC = cursor.getString(2);
+                xAxis.add(date);
+                BarEntry newdata = new BarEntry(Float.parseFloat(sentenceC), 1); // (value, x index)
+                valueSet.add(newdata);
+                sentencediffv.setText(sentenceC +"%");
+            }
+            cursor.close();
+
+            BarDataSet barDataSet = new BarDataSet(valueSet, "");
+            barDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
+
+            dataSets = new ArrayList<>();
+            dataSets.add(barDataSet);
+        }
+
+    }
+
+    @Override
+    public void onNothingSelected() {
+    }
+
+    @Override
+    public void onEntryAdded(Entry entry) {
+
+    }
+
+    @Override
+    public void onEntryMoved(Entry entry) {
+
+    }
+
+    @Override
+    public void onDrawFinished(DataSet<?> dataSet) {
 
     }
 }
