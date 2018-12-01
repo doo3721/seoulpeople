@@ -130,7 +130,7 @@ public class RecordActivity extends AppCompatActivity {
                 //IntentPage Activity에 데이터를 전달.
 
                 startActivity(intent);  //인텐트를 시작한다.
-                overridePendingTransition(R.anim.anim_slide_in_left, R.anim.anim_slide_out_right);
+                overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
             }
         });
 
@@ -441,10 +441,11 @@ public class RecordActivity extends AppCompatActivity {
     class MyThread extends Thread {
         @Override
         public void run() {
+
             while(true) {
                 handler.sendEmptyMessage(0);
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

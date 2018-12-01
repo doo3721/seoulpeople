@@ -74,7 +74,7 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
     // TODO: 음성 일치율 계산
 
     // 데이터 누적을 위한 변수 목록
-
+    private int indexi = 0;
     SQLiteDatabase sqliteDB ;
 
     @Override
@@ -164,7 +164,7 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
 
             dataSets = null;
             valueSet = new ArrayList<>();
-            int i = 0;
+            indexi = 0;
             xAxis = new ArrayList<>();
 
             // 쿼리 실행
@@ -181,9 +181,9 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
                 String sentenceC = cursor.getString(2);
 
                 xAxis.add(date);
-                BarEntry newdata = new BarEntry(Float.parseFloat(sentenceC), i); // (value, x index)
+                BarEntry newdata = new BarEntry(Float.parseFloat(sentenceC), indexi); // (value, x index)
                 valueSet.add(newdata);
-                i++;
+                indexi++;
             } while (cursor.moveToNext());
 
             cursor.close();
@@ -312,7 +312,7 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         barchart.setScaleEnabled(false);
         barchart.setData(bardata);
         barchart.setVisibleXRangeMaximum(4); // allow 20 values to be displayed at once on the x-axis, not more
-        barchart.moveViewToX(20); // set the left edge of the chart to x-index 10
+        barchart.moveViewToX(indexi); // set the left edge of the chart to x-index 10
                                         // moveViewToX(...) also calls invalidate()
         barchart.animateXY(1000, 1000);
         barchart.invalidate();
@@ -331,7 +331,7 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
 
             dataSets = null;
             valueSet = new ArrayList<>();
-            int i = 0;
+            indexi = 0;
             xAxis = new ArrayList<>();
 
             // 쿼리 실행
