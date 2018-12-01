@@ -114,11 +114,12 @@ public class ResultActivity extends AppCompatActivity {
         Toast.makeText(getApplication(), sentenceConsistency, Toast.LENGTH_LONG).show();
         sentencediffv.setText(sentenceConsistency);
 
-        // 현재 실행한 테스트를 DB에 저장
+        // TODO:현재 실행한 테스트를 DB에 저장
         save_values();
     }
 
     private SQLiteDatabase init_database() {
+        // 데이터베이스 처음 생성시 초기화
         SQLiteDatabase db = null;
 
         // File file = getDatabasePath("contact.db") ;
@@ -137,6 +138,7 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private void init_tables() {
+        // 테이블 처음 생성시 초기화
         if (sqliteDB != null) {
             String sqlCreateTbl = "CREATE TABLE IF NOT EXISTS CONTACT_T (" +
                     "Date " + "INTEGER NOT NULL," +
@@ -148,6 +150,7 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private void load_values() {
+        // TODO: 액티비티 로드 시 barchart 에 표시될 데이터 로드하기
         if (sqliteDB != null) {
             String sqlQueryTbl = "SELECT * FROM CONTACT_T";
             Cursor cursor = null;
@@ -167,6 +170,8 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private void save_values() {
+        //TODO: 수행 결과를 데이터베이스에 추가하기.
+
         if (sqliteDB != null) {
 
             // delete
@@ -276,6 +281,8 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private ArrayList<IBarDataSet> getDataSet() {
+        //TODO: DB에 저장된 데이터 받아서 밸류로 추가하기
+
         ArrayList<IBarDataSet> dataSets = null;
 
         ArrayList<BarEntry> valueSet2 = new ArrayList<>();
@@ -314,6 +321,8 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     private ArrayList<String> getXAxisValues() {
+        //TODO: DB에 저장된 날짜 받아서 X 축으로 추가하기
+
         ArrayList<String> xAxis = new ArrayList<>();
         xAxis.add("2018-12-01");
         xAxis.add("2018-12-02");
