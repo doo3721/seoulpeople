@@ -10,6 +10,7 @@ Todo list for Like Seoul People
 - [X] Using Voice visualization API, write sentence
 - [X] Draw real time graph
 - [X] Implement User voice graph and sentence as realtime
+- [X] User consistency data load and save
 - [ ] draw graph with standard voice data and User voice data
 - [ ] Implement standard voice graph and sentence as realtime
 
