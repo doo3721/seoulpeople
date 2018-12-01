@@ -1,8 +1,8 @@
 package com.example.doo37.seoulpeople;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.View;
 
 import com.github.paolorotolo.appintro.AppIntro;
@@ -35,6 +35,7 @@ public class IntroActivity extends AppCompatActivity {
     private TextView[] dots;
     private int[] layouts;
     private Button btnSkip, btnNext;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,8 +120,8 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     private void launchHomeScreen() {
-        startActivity(new Intent(IntroActivity.this, MainActivity.class));
         finish();
+        startActivity(new Intent(IntroActivity.this, MainActivity.class));
     }
 
     //  viewpager change listener

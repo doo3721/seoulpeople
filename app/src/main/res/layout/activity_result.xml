@@ -38,8 +38,18 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="일치율 출력"
-                android:textSize="25sp" />
+                android:text="음성 일치율 출력"
+                android:textSize="25sp"
+                android:id="@+id/voicediff"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="단어 일치율 출력"
+                android:textSize="25sp"
+                android:id="@+id/sentencedif"/>
 
         </LinearLayout>
 

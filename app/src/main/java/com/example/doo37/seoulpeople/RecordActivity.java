@@ -1,5 +1,6 @@
 package com.example.doo37.seoulpeople;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.YAxis;
@@ -48,6 +50,8 @@ public class RecordActivity extends AppCompatActivity {
     private TextView tv_sentence;
     private Intent i_speech;
     private ImageView bt_record;
+    private ImageView bt_retry;
+    private ImageView bt_end;
     private SpeechRecognizer sr;
     private MediaPlayer mr;
     private Visualizer vl;
@@ -78,9 +82,15 @@ public class RecordActivity extends AppCompatActivity {
     // 비교 부분에서 사용해야 하기 때문에 v_txt 옮김
     String v_txt = "";
 
+    // 사용자 문장 비교를 위한 변수 목록
     private TextView tv_compare;
     ArrayList<String> t_compare = new ArrayList<>();
     String c_txt = "";
+
+    // 일치율 검사를 위한 변수 목록
+    public static Context mContext;
+    private int stdsLength;
+    private int usrsLength;
 
     SpannableStringBuilder ssb = new SpannableStringBuilder();
 
@@ -88,6 +98,9 @@ public class RecordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record);
+
+        // 싱글톤 패턴 이용
+        mContext = this;
 
         // TextView, Button 객체 연동
         tv_stt = (TextView) findViewById(R.id.tv_stt);
@@ -97,7 +110,23 @@ public class RecordActivity extends AppCompatActivity {
         tv_compare = (TextView) findViewById(R.id.tv_compare);
 
         bt_record = (ImageView) findViewById(R.id.bt_record);
-        // At unexpected error occured, I dont know where this buttion should be.
+        bt_retry = (ImageView) findViewById(R.id.bt_retry);
+        bt_end = (ImageView) findViewById(R.id.bt_end);
+        bt_end.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                finish();
+                //키 값으로 String이라는 이름을 지정하며 , 두번째 인자로 전송할 데이터 변수 지정   .putExtra("key",value);
+                Intent intent = new Intent(getApplicationContext(),ResultActivity.class);   //첫번째 인자 나의 클래스명, 두번째 인자 이동할 클래스명
+
+                //키 값으로 ArrayList라는 이름으로 지정, 전송할 데이터 변수 지정 .putStringArrayListExtra("KEY",value);
+                //intent.putStringArrayListExtra("ArrayList", ArrData);
+
+                //IntentPage Activity에 데이터를 전달.
+
+                startActivity(intent);  //인텐트를 시작한다.
+            }
+        });
 
         // 음성인식을 위한 Intent 설정
         i_speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -127,11 +156,33 @@ public class RecordActivity extends AppCompatActivity {
         sr = SpeechRecognizer.createSpeechRecognizer(this);
         sr.setRecognitionListener(recognitionListener);
 
+        stdsLength = 0;
+        usrsLength = 0;
+
         init(); // 차트 생성 및 옵션 부여
+    }
+
+    public void setstdsLength(int stdsLength){
+        this.stdsLength = stdsLength;
+    }
+
+    public void setusrsLength(int usrsLength){
+        this.usrsLength = usrsLength;
+    }
+
+    public int getstdsLength(){
+        return stdsLength;
+    }
+
+    public int getusrsLength(){
+        return usrsLength;
     }
 
     // 녹음 버튼 클릭 이벤트
     public void recordListener(View v) {
+
+        bt_record.setVisibility(View.GONE);
+        bt_retry.setVisibility(View.VISIBLE);
 
         threadStart(); // 차트에 데이터 넣을 스레드 실행
 
@@ -219,19 +270,6 @@ public class RecordActivity extends AppCompatActivity {
             tv_stt.setText(s_sentence.get(0));
             bt_record.setEnabled(true);
 
-
-            new Timer().schedule(
-                    new TimerTask(){
-
-                        @Override
-                        public void run(){
-
-                            //if you need some code to run when the delay expires
-                        }
-
-                    }, 10);
-
-
             // 두 텍스트 비교 알고리즘 사용 부분
 
             LinkedList<diff_match_patch.Diff> diff = dmp.diff_main(s_sentence.get(0), v_txt);
@@ -241,6 +279,8 @@ public class RecordActivity extends AppCompatActivity {
             dmp.diff_cleanupEfficiency(diff);
 
             String c_txt = "";
+            usrsLength = 0;
+            stdsLength = 0;
 
             try {
                 for (diff_match_patch.Diff d : diff) {
@@ -260,12 +300,29 @@ public class RecordActivity extends AppCompatActivity {
             for (int j = 0; j < cmp_temp.size(); j++) {
                 if (c_txt.contains(cmp_temp.get(j))) {
                     int i = c_txt.indexOf(cmp_temp.get(j));
+                    usrsLength = usrsLength + cmp_temp.get(j).length();
                     ssb.setSpan(new ForegroundColorSpan(Color.parseColor("#5F00FF")), i, i + cmp_temp.get(j).length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 }
             }
 
+            setstdsLength(c_txt.length() - usrsLength);
+            setusrsLength(usrsLength);
+
+            // 문자열 비교를 위한 테스트 구문
+
+            /*
+            stdsLength = getstdsLength();
+            usrsLength = getusrsLength();
+            String temp = String.valueOf(usrsLength);
+            Toast.makeText(getApplication(), temp, Toast.LENGTH_LONG).show();
+            temp = String.valueOf(stdsLength);
+            Toast.makeText(getApplication(), temp, Toast.LENGTH_LONG).show();
+            */
+
             tv_compare.setText("");
             tv_compare.append(ssb);
+
+            bt_end.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -283,7 +340,6 @@ public class RecordActivity extends AppCompatActivity {
         }
 
     };
-
 
     private void init() { // 차트 생성 함수
         chart = (LineChart) findViewById(R.id.chart);

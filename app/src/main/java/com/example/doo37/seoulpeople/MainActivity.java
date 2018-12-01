@@ -81,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 onBackPressed();
-
+                mSensor.stop();
+                handler.removeMessages(0);
                 Intent intent = new Intent(
                         getApplicationContext(), IntroActivity.class);
                 startActivity(intent);
@@ -113,23 +114,23 @@ public class MainActivity extends AppCompatActivity {
 
         // chart UI 옵션
         chart.setBackgroundColor(Color.WHITE);
-        //chart.setDrawGridBackground(false);
+        chart.setDrawGridBackground(false);
 
-        // chart.setDescription("");
+        chart.setDescription("");
 
         // grid line 비활성화
-        //chart.getXAxis().setDrawGridLines(false);
-        //chart.getAxisLeft().setDrawGridLines(false);
-        //chart.getAxisRight().setDrawGridLines(false);
+        chart.getXAxis().setDrawGridLines(false);
+        chart.getAxisLeft().setDrawGridLines(false);
+        chart.getAxisRight().setDrawGridLines(false);
 
         chart.getAxisRight().setAxisMinValue(-2.0f);
         chart.getAxisLeft().setAxisMinValue(-2.0f);
         chart.getAxisRight().setAxisMaxValue(16.0f);
         chart.getAxisLeft().setAxisMaxValue(16.0f);
         chart.getXAxis().setEnabled(false);
-        //chart.getAxisRight().setEnabled(false);
-        //chart.getAxisLeft().setEnabled(false);
-        // chart.getLegend().setEnabled(false);
+        chart.getAxisRight().setEnabled(false);
+        chart.getAxisLeft().setEnabled(false);
+        chart.getLegend().setEnabled(false);
 
         xVal = new ArrayList<Entry>();
         setXcomp = new LineDataSet(xVal, "내 음성");

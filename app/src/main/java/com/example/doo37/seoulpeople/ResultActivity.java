@@ -1,23 +1,14 @@
 package com.example.doo37.seoulpeople;
 
-import android.Manifest;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.RectF;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -59,6 +50,11 @@ public class ResultActivity extends AppCompatActivity {
     ArrayList<IBarDataSet> barDataSets;
     BarData barData;
 
+    // 일치율 관련 뷰
+    TextView voicediffv;
+    TextView sentencediffv;
+
+    String sentenceConsistency = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +74,29 @@ public class ResultActivity extends AppCompatActivity {
         init(); // 차트 생성 및 옵션 부여
 
         threadStart(); // 차트 업데이트 스레드
+
+        voicediffv = (TextView)findViewById(R.id.voicediff);
+        sentencediffv = (TextView)findViewById(R.id.sentencedif);
+
+
+        float stdsLength = ((RecordActivity)RecordActivity.mContext).getstdsLength();
+        float usrsLength = ((RecordActivity)RecordActivity.mContext).getusrsLength();
+
+        // 일치율 테스트 함수 반환값을 테스트하기 위한 테스트코드
+        /*
+        String temp = String.valueOf(stdsLength);
+        Toast.makeText(getApplication(), temp, Toast.LENGTH_LONG).show();
+        temp = String.valueOf(usrsLength);
+        Toast.makeText(getApplication(), temp, Toast.LENGTH_LONG).show();
+        */
+
+        float tempConsistency = (usrsLength / stdsLength) * 100;
+        String sentenceConsistency = String.valueOf(tempConsistency);
+        sentenceConsistency = sentenceConsistency +"%";
+
+        Toast.makeText(getApplication(), sentenceConsistency, Toast.LENGTH_LONG).show();
+        sentencediffv.setText(sentenceConsistency);
+
     }
 
 
@@ -122,7 +141,6 @@ public class ResultActivity extends AppCompatActivity {
         lineDataSets = new ArrayList<ILineDataSet>();
         lineDataSets.add(setXcomp);
 
-
         xVals = new ArrayList<String>();
         for (int i = 0; i < X_RANGE; i++) {
             xVals.add("");
@@ -131,10 +149,7 @@ public class ResultActivity extends AppCompatActivity {
         linechart.setData(lineData);
         linechart.invalidate();
 
-
-
         // Bar 차트 관련 옵션
-
         barchart.setAutoScaleMinMaxEnabled(true);
 
         // chart UI 옵션
@@ -209,11 +224,6 @@ public class ResultActivity extends AppCompatActivity {
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == 0) {
-                int a = 0;
-                a = (int)(Math.random()*100);
-                chartUpdate(a);
-            }
         }
     };
 
