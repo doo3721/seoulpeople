@@ -12,11 +12,12 @@
         android:orientation="vertical">
 
         <ImageView
-            android:layout_width="@dimen/img_width_height"
-            android:layout_height="@dimen/img_width_height"
-            android:src="@drawable/question" />
+            android:layout_width="220dp"
+            android:layout_height="220dp"
+            android:src="@mipmap/barchart" />
 
         <TextView
+            android:layout_marginTop="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/slide_3_title"
@@ -33,7 +34,7 @@
             android:text="@string/slide_3_desc"
             android:textAlignment="center"
             android:textColor="@android:color/white"
-            android:textSize="@dimen/slide_desc" />
+            android:textSize="20dp" />
 
     </LinearLayout>
 
