@@ -57,9 +57,16 @@ public class RecordActivity extends AppCompatActivity {
     private InputStream is_txt;
     ArrayList<String> r_sentences = new ArrayList<>();      // 저장 된 녹음 문장 배열
     ArrayList<String> t_sentences = new ArrayList<>();     // 문장 파일의 문장 배열
-    ArrayList<Float> rmsList = new ArrayList<>();           // 음성 rms수치 리스트
-    ArrayList<Float> soundAmpList = new ArrayList<>();
+    ArrayList<Float> sttRmsList = new ArrayList<>();           // 음성 rms수치 리스트
+    ArrayList<Float> soundAmpList = new ArrayList<>();          // 음성파일 amp수치 리스트
     float changedRMS;
+
+    // soundAmpList와 sttRmsList의 크기를 같게 해주는 요소
+    int soundCount = 0;                                 // soundAmpList의 크기를 결정하는 count
+    int sttCount = 0;                                   // soundAmpList의 크기를 토대로 sttRmsList의 크기를 결정
+    boolean isSTTReady = false;                       // STT가 준비시 부터 RMS 값을 받게 하기 시작
+
+    private boolean isEndOfSpeech = false;
 
     private DetectNoise mSensor;
 
@@ -179,8 +186,6 @@ public class RecordActivity extends AppCompatActivity {
         bt_record.setVisibility(View.GONE);
         bt_retry.setVisibility(View.VISIBLE);
 
-        threadStart(); // 차트에 데이터 넣을 스레드 실행
-
         // 텍스트 호출
         try {
             is_txt = getResources().openRawResource(R.raw.txt1);
@@ -195,18 +200,23 @@ public class RecordActivity extends AppCompatActivity {
         tv_sentence.setText(v_txt);
         bt_record.setEnabled(false);
 
-        // mediaplayer 설정
-        mr = MediaPlayer.create(this, R.raw.voice1);
+
         final Timer tm = new Timer();
-        mr.start();
         tm.schedule(new TimerTask() {
             @Override
             public void run() {
+                ++soundCount;
                 float amp = (float) mSensor.getAmplitude();
+                amp = (float) ((amp - (-30.0)) / (12.0 - (-30.0)) * 100.0);
+                if (amp <= 0) amp = 0.0f;   if(amp >= 100) amp = 100.0f;
                 soundAmpList.add(amp);
-                Log.d("앰프", String.valueOf(amp));
+                Log.d("앰프", String.valueOf(amp) + ", 카운트: "+String.valueOf(soundCount));
             }
-        }, 0, 100);
+        }, 0, 50);
+
+        // mediaplayer 설정
+        mr = MediaPlayer.create(this, R.raw.voice1);
+        mr.start();
 
         mr.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -247,6 +257,7 @@ public class RecordActivity extends AppCompatActivity {
     private RecognitionListener recognitionListener = new RecognitionListener() {
         @Override
         public void onReadyForSpeech(Bundle bundle) {
+            isSTTReady = true;
             Log.d("메세지: ", "준비");
         }
 
@@ -259,9 +270,12 @@ public class RecordActivity extends AppCompatActivity {
         public void onRmsChanged(float v) {
             float rms = (float) ((v - (-2.0)) / (10.0 - (-2.0)) * 100.0);
             if (rms <= 0) rms = 0.0f;   if(rms >= 100) rms = 100.0f;
-            Log.d("R-RMS:", " " + rms);
-            rmsList.add(v);
-            changedRMS = v;
+            if(isSTTReady && (sttCount < soundCount)) {
+                ++sttCount;
+                sttRmsList.add(v);
+                changedRMS = v;
+                Log.d("R-RMS:", " " + rms + ", 카운트: " + String.valueOf(sttCount));
+            }
         }
 
         @Override
@@ -270,6 +284,7 @@ public class RecordActivity extends AppCompatActivity {
 
         @Override
         public void onEndOfSpeech() {
+            isEndOfSpeech = true;
             Log.d("메세지: ", "종료");
         }
 
@@ -283,9 +298,6 @@ public class RecordActivity extends AppCompatActivity {
         @Override
         public void onResults(Bundle results) {
 
-
-
-            tv_stt.setText("");
             ArrayList<String> s_sentence = (ArrayList<String>) results.get(SpeechRecognizer.RESULTS_RECOGNITION);
 
             // 0번이 가장 신뢰도 높은 결과
@@ -365,7 +377,9 @@ public class RecordActivity extends AppCompatActivity {
             for (int i=0; i<s_parts.size(); i++) {
                 s_temp += s_parts.get(i);
             }
-            tv_stt.setText(s_temp);
+            Log.d("문장: ", s_temp);
+            if(!isEndOfSpeech)
+                tv_stt.setText(s_temp);
         }
 
         @Override
@@ -391,10 +405,10 @@ public class RecordActivity extends AppCompatActivity {
 
         // grid line 비활성화
 
-        chart.getAxisRight().setAxisMinValue(-30.0f);
-        chart.getAxisLeft().setAxisMinValue(-30.0f);
-        chart.getAxisRight().setAxisMaxValue(30.0f);
-        chart.getAxisLeft().setAxisMaxValue(30.0f);
+        chart.getAxisRight().setAxisMinValue(0.0f);
+        chart.getAxisLeft().setAxisMinValue(0.0f);
+        chart.getAxisRight().setAxisMaxValue(100.0f);
+        chart.getAxisLeft().setAxisMaxValue(100.0f);
 
         chart.getXAxis().setDrawGridLines(false);
         //chart.getAxisLeft().setDrawGridLines(false);
