@@ -48,7 +48,6 @@ public class DetectNoise {
             return   20 * Math.log10(mRecorder.getMaxAmplitude() / 2700.0);
         else
             return 0;
-
     }
 
 }

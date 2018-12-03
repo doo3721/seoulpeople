@@ -57,16 +57,18 @@ public class MainActivity extends AppCompatActivity {
             threadStart();
         }
         else {
-            boolean isGranted = true;
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},
                     MY_PERMISSIONS_RECORD_AUDIO);
-            // 퍼미션 허용이 될 때까지 반복
-            while(isGranted) {
+
+            boolean isGranted = false;
+            // 퍼미션 허용이 될 때까지 Lock을 걸어놓음
+            while(!isGranted) {
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                         == PackageManager.PERMISSION_GRANTED) {
-                    isGranted = false;
+                    isGranted = true;
                 }
             }
+
             threadStart();
         }
 

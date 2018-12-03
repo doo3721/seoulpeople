@@ -50,14 +50,14 @@ public class RecordActivity extends AppCompatActivity {
     private ImageView bt_record;
     private SpeechRecognizer sr;
     private MediaPlayer mr;
-    private Visualizer vl;
     private InputStream is_txt;
     ArrayList<String> r_sentences = new ArrayList<>();      // 저장 된 녹음 문장 배열
     ArrayList<String> t_sentences = new ArrayList<>();     // 문장 파일의 문장 배열
     ArrayList<Float> rmsList = new ArrayList<>();           // 음성 rms수치 리스트
+    ArrayList<Float> soundAmpList = new ArrayList<>();
     float changedRMS;
 
-    Timer sTimer;
+    private DetectNoise mSensor;
 
     // 차트 관련 선언
     LineChart chart;
@@ -65,6 +65,7 @@ public class RecordActivity extends AppCompatActivity {
     int DATA_RANGE = 30;
 
     ArrayList<Entry> xVal;
+    //ArrayList<Entry> yVal;
     LineDataSet setXcomp;
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
@@ -99,41 +100,26 @@ public class RecordActivity extends AppCompatActivity {
         bt_record = (ImageView) findViewById(R.id.bt_record);
         // At unexpected error occured, I dont know where this buttion should be.
 
+        init(); // 차트 생성 및 옵션 부여
+
         // 음성인식을 위한 Intent 설정
         i_speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         i_speech.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         i_speech.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         i_speech.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR");
 
-        // 음성 파일 RMS 측정을 위한 Visualizer 초기화
-        vl = new Visualizer(MY_AUDIOSESSION);
-        vl.setMeasurementMode(Visualizer.MEASUREMENT_MODE_PEAK_RMS);
-        vl.setEnabled(true);
-
-        // 음성 파일 RMS 측정을 위한 timertask 생성
-        sTimer = new Timer();
-        sTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Visualizer.MeasurementPeakRms mpr = new Visualizer.MeasurementPeakRms();
-                vl.getMeasurementPeakRms(mpr);
-                float maxmin = (float) ((-4500.0) - (-9600.0));
-                float rms = (float) ((mpr.mRms - (-9600.0)) / maxmin);
-                Log.d("RMS:", " " + rms);
-            }
-        }, 0, 100);
+        mSensor = new DetectNoise();
 
         // SpeechRecognizer 설정
         sr = SpeechRecognizer.createSpeechRecognizer(this);
         sr.setRecognitionListener(recognitionListener);
-
-        init(); // 차트 생성 및 옵션 부여
     }
 
     // 녹음 버튼 클릭 이벤트
     public void recordListener(View v) {
 
-        threadStart(); // 차트에 데이터 넣을 스레드 실행
+        // threadStart(); // 차트에 데이터 넣을 스레드 실행
+        mSensor.start();
 
         // 텍스트 호출
         try {
@@ -151,18 +137,41 @@ public class RecordActivity extends AppCompatActivity {
 
         // mediaplayer 설정
         mr = MediaPlayer.create(this, R.raw.voice1);
+        final Timer tm = new Timer();
         mr.start();
+        tm.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                float amp = (float) mSensor.getAmplitude();
+                soundAmpList.add(amp);
+                Log.d("앰프", String.valueOf(amp));
+            }
+        }, 0, 100);
+
         mr.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
                 mp.stop();
                 mp.release();
-                sTimer.cancel();
-                sTimer.purge();
+                tm.cancel();
+                tm.purge();
+                mSensor.stop();
+
+                SoundAmpGraph(soundAmpList);
+
                 // stt 호출
                 sr.startListening(i_speech);
             }
         });
+    }
+
+    public void SoundAmpGraph(ArrayList<Float> ampList) {
+        for(int i=0; i<soundAmpList.size(); i++) {
+            xVal.add(new Entry(soundAmpList.get(i), i+1));
+        }
+        setXcomp.notifyDataSetChanged();
+        chart.notifyDataSetChanged();
+        chart.invalidate();
     }
 
     // 다시 버튼 클릭 이벤트
@@ -185,8 +194,9 @@ public class RecordActivity extends AppCompatActivity {
 
         @Override
         public void onRmsChanged(float v) {
-            float rms = (float) ((v - (-2.0)) / (10.0 - (-2)));
-            Log.d("RMS:", " " + rms);
+            float rms = (float) ((v - (-2.0)) / (10.0 - (-2.0)) * 100.0);
+            if (rms <= 0) rms = 0.0f;   if(rms >= 100) rms = 100.0f;
+            Log.d("R-RMS:", " " + rms);
             rmsList.add(v);
             changedRMS = v;
         }
@@ -219,21 +229,7 @@ public class RecordActivity extends AppCompatActivity {
             tv_stt.setText(s_sentence.get(0));
             bt_record.setEnabled(true);
 
-
-            new Timer().schedule(
-                    new TimerTask(){
-
-                        @Override
-                        public void run(){
-
-                            //if you need some code to run when the delay expires
-                        }
-
-                    }, 10);
-
-
             // 두 텍스트 비교 알고리즘 사용 부분
-
             LinkedList<diff_match_patch.Diff> diff = dmp.diff_main(s_sentence.get(0), v_txt);
 
             ArrayList<String> cmp_temp = new ArrayList<>();
@@ -301,14 +297,20 @@ public class RecordActivity extends AppCompatActivity {
         chart.setDescription("");
 
         // grid line 비활성화
+
+        chart.getAxisRight().setAxisMinValue(-30.0f);
+        chart.getAxisLeft().setAxisMinValue(-30.0f);
+        chart.getAxisRight().setAxisMaxValue(30.0f);
+        chart.getAxisLeft().setAxisMaxValue(30.0f);
+
         chart.getXAxis().setDrawGridLines(false);
-        chart.getAxisLeft().setDrawGridLines(false);
-        chart.getAxisRight().setDrawGridLines(false);
+        //chart.getAxisLeft().setDrawGridLines(false);
+       // chart.getAxisRight().setDrawGridLines(false);
 
         chart.getXAxis().setEnabled(false);
 
-        chart.getAxisRight().setEnabled(false);
-        chart.getAxisLeft().setEnabled(false);
+        //chart.getAxisRight().setEnabled(false);
+        //chart.getAxisLeft().setEnabled(false);
         chart.getLegend().setEnabled(false);
 
         xVal = new ArrayList<Entry>();
@@ -329,6 +331,7 @@ public class RecordActivity extends AppCompatActivity {
         for (int i = 0; i < X_RANGE; i++) {
             xVals.add("");
         }
+
         lineData = new LineData(xVals,lineDataSets);
         chart.setData(lineData);
         chart.invalidate();
@@ -355,7 +358,10 @@ public class RecordActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == 0) {
-                chartUpdate(changedRMS);
+                float amp = (float) mSensor.getAmplitude();
+                soundAmpList.add(amp);
+                chartUpdate(amp);
+                // chartUpdate(changedRMS);
             }
         }
     };
@@ -367,7 +373,7 @@ public class RecordActivity extends AppCompatActivity {
             while(true) {
                 handler.sendEmptyMessage(0);
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
