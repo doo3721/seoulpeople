@@ -10,12 +10,12 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="850dp"
         android:orientation="vertical">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="250dp"
             android:layout_weight="40"
             android:gravity="center"
             android:orientation="vertical">
@@ -28,15 +28,15 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="300dp"
             android:layout_weight="45"
             android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="top"
+                android:layout_height="100dp"
                 android:layout_weight="50"
+                android:gravity="top"
                 android:orientation="vertical">
 
                 <TextView
@@ -51,14 +51,14 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="표준 문장 출력 할 곳"
-                android:textSize="25sp"
+                android:layout_height="100dp"
                 android:layout_weight="50"
-                android:orientation="vertical">
+                android:gravity="center"
+                android:orientation="vertical"
+                android:text="표준 문장 출력 할 곳"
+                android:textSize="25sp">
 
-            <TextView
+                <TextView
                     android:id="@+id/tv_stt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -70,12 +70,12 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="표준 문장 출력 할 곳"
-                android:textSize="25sp"
+                android:layout_height="100dp"
                 android:layout_weight="50"
-                android:orientation="vertical">
+                android:gravity="center"
+                android:orientation="vertical"
+                android:text="표준 문장 출력 할 곳"
+                android:textSize="25sp">
 
                 <TextView
                     android:id="@+id/tv_compare"
@@ -89,38 +89,52 @@
 
         </LinearLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="15"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_height="400dp"
+            android:layout_weight="40">
 
             <ImageView
                 android:id="@+id/bt_record"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:srcCompat="@drawable/recordstartbutton"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
                 android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="206dp"
+                android:layout_weight="1"
                 android:onClick="recordListener"
-                android:text="녹음"
-                android:textSize="20dp"
-                android:textStyle="bold" />
+                app:srcCompat="@drawable/recordstartbutton" />
 
             <ImageView
-                android:id="@+id/ReTry"
+                android:id="@+id/bt_retry"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:srcCompat="@drawable/retrybutton"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
                 android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="206dp"
+                android:layout_weight="1"
                 android:onClick="replayListener"
-                android:text="다시"
-                android:textSize="20dp"
-                android:textStyle="bold" />
+                app:srcCompat="@drawable/retrybutton"
+                android:visibility="invisible"/>
 
-        </LinearLayout>
+            <ImageView
+                android:id="@+id/bt_end"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/bt_record"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_gravity="center"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/endbutton" />
+        </RelativeLayout>
     </LinearLayout>
 
 

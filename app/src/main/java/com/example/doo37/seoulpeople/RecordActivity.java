@@ -1,5 +1,6 @@
 package com.example.doo37.seoulpeople;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.YAxis;
@@ -48,6 +50,8 @@ public class RecordActivity extends AppCompatActivity {
     private TextView tv_sentence;
     private Intent i_speech;
     private ImageView bt_record;
+    private ImageView bt_retry;
+    private ImageView bt_end;
     private SpeechRecognizer sr;
     private MediaPlayer mr;
     private InputStream is_txt;
@@ -79,9 +83,18 @@ public class RecordActivity extends AppCompatActivity {
     // 비교 부분에서 사용해야 하기 때문에 v_txt 옮김
     String v_txt = "";
 
+    // 사용자 문장 비교를 위한 변수 목록
     private TextView tv_compare;
     ArrayList<String> t_compare = new ArrayList<>();
     String c_txt = "";
+
+    // 일치율 검사를 위한 변수 목록
+    public static Context mContext;
+    private int stdsLength;
+    private int usrsLength;
+
+    // 음성 일치율 검사를 위한 변수 목록
+    // TODO: 음성 일치율 계산
 
     SpannableStringBuilder ssb = new SpannableStringBuilder();
 
@@ -89,6 +102,9 @@ public class RecordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record);
+
+        // 싱글톤 패턴 이용
+        mContext = this;
 
         // TextView, Button 객체 연동
         tv_stt = (TextView) findViewById(R.id.tv_stt);
@@ -98,7 +114,26 @@ public class RecordActivity extends AppCompatActivity {
         tv_compare = (TextView) findViewById(R.id.tv_compare);
 
         bt_record = (ImageView) findViewById(R.id.bt_record);
-        // At unexpected error occured, I dont know where this buttion should be.
+        bt_retry = (ImageView) findViewById(R.id.bt_retry);
+        bt_end = (ImageView) findViewById(R.id.bt_end);
+        bt_end.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                // rms stop
+                sr.stopListening();
+                finish();
+                //키 값으로 String이라는 이름을 지정하며 , 두번째 인자로 전송할 데이터 변수 지정   .putExtra("key",value);
+                Intent intent = new Intent(getApplicationContext(),ResultActivity.class);   //첫번째 인자 나의 클래스명, 두번째 인자 이동할 클래스명
+
+                //키 값으로 ArrayList라는 이름으로 지정, 전송할 데이터 변수 지정 .putStringArrayListExtra("KEY",value);
+                //intent.putStringArrayListExtra("ArrayList", ArrData);
+
+                //IntentPage Activity에 데이터를 전달.
+
+                startActivity(intent);  //인텐트를 시작한다.
+                overridePendingTransition(R.anim.anim_slide_in_right, R.anim.anim_slide_out_left);
+            }
+        });
 
         init(); // 차트 생성 및 옵션 부여
 
@@ -113,6 +148,27 @@ public class RecordActivity extends AppCompatActivity {
         // SpeechRecognizer 설정
         sr = SpeechRecognizer.createSpeechRecognizer(this);
         sr.setRecognitionListener(recognitionListener);
+
+        stdsLength = 0;
+        usrsLength = 0;
+
+        init(); // 차트 생성 및 옵션 부여
+    }
+
+    public void setstdsLength(int stdsLength){
+        this.stdsLength = stdsLength;
+    }
+
+    public void setusrsLength(int usrsLength){
+        this.usrsLength = usrsLength;
+    }
+
+    public int getstdsLength(){
+        return stdsLength;
+    }
+
+    public int getusrsLength(){
+        return usrsLength;
     }
 
     // 녹음 버튼 클릭 이벤트
@@ -120,6 +176,10 @@ public class RecordActivity extends AppCompatActivity {
 
         // threadStart(); // 차트에 데이터 넣을 스레드 실행
         mSensor.start();
+        bt_record.setVisibility(View.GONE);
+        bt_retry.setVisibility(View.VISIBLE);
+
+        threadStart(); // 차트에 데이터 넣을 스레드 실행
 
         // 텍스트 호출
         try {
@@ -177,7 +237,10 @@ public class RecordActivity extends AppCompatActivity {
     // 다시 버튼 클릭 이벤트
     public void replayListener(View v) {
         finish();
+        // rms stop
+        sr.stopListening();
         startActivity(new Intent(this, RecordActivity.class));
+        this.overridePendingTransition(0, 0);
     }
 
     // SpeechRecognizer의 이벤트 메소드 설정
@@ -219,11 +282,18 @@ public class RecordActivity extends AppCompatActivity {
         // 녹음 후 결과 출력, 녹음 문장 저장
         @Override
         public void onResults(Bundle results) {
+
+
+
             tv_stt.setText("");
             ArrayList<String> s_sentence = (ArrayList<String>) results.get(SpeechRecognizer.RESULTS_RECOGNITION);
 
             // 0번이 가장 신뢰도 높은 결과
             r_sentences.add(s_sentence.get(0));
+
+            // rms stop
+            sr.stopListening();
+
             r_sentences.add(" / ");
 
             tv_stt.setText(s_sentence.get(0));
@@ -237,19 +307,27 @@ public class RecordActivity extends AppCompatActivity {
             dmp.diff_cleanupEfficiency(diff);
 
             String c_txt = "";
+            String c_txt2 = "";
+            usrsLength = 0;
+            stdsLength = 0;
 
             try {
                 for (diff_match_patch.Diff d : diff) {
                     if (d.operation == diff_match_patch.Operation.INSERT) {
                         c_txt = c_txt + " " + d.text;
+                        c_txt2= c_txt2 + d.text;
                     }
                     else if (d.operation == diff_match_patch.Operation.EQUAL) {
                         c_txt = c_txt + " " + d.text;
+                        c_txt2= c_txt2 + d.text;
                         cmp_temp.add(d.text);
+                        usrsLength = usrsLength + d.text.length();
                     }
                 }
             } catch (Exception e) {
             }
+
+            stdsLength = c_txt2.length() - 1;
 
             SpannableStringBuilder ssb = new SpannableStringBuilder(c_txt);
 
@@ -260,8 +338,24 @@ public class RecordActivity extends AppCompatActivity {
                 }
             }
 
+            setstdsLength(stdsLength);
+            setusrsLength(usrsLength);
+
+            // 문자열 비교를 위한 테스트 구문
+
+            /*
+            stdsLength = getstdsLength();
+            usrsLength = getusrsLength();
+            String temp = String.valueOf(usrsLength);
+            Toast.makeText(getApplication(), temp, Toast.LENGTH_LONG).show();
+            temp = String.valueOf(stdsLength);
+            Toast.makeText(getApplication(), temp, Toast.LENGTH_LONG).show();
+            */
+
             tv_compare.setText("");
             tv_compare.append(ssb);
+
+            bt_end.setVisibility(View.VISIBLE);
         }
 
         @Override
@@ -279,7 +373,6 @@ public class RecordActivity extends AppCompatActivity {
         }
 
     };
-
 
     private void init() { // 차트 생성 함수
         chart = (LineChart) findViewById(R.id.chart);
@@ -370,6 +463,7 @@ public class RecordActivity extends AppCompatActivity {
     class MyThread extends Thread {
         @Override
         public void run() {
+
             while(true) {
                 handler.sendEmptyMessage(0);
                 try {
