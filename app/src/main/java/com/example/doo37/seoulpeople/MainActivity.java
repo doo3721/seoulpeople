@@ -29,8 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
     // 차트 관련 선언
     LineChart chart;
-    int X_RANGE = 50;
-    int DATA_RANGE = 40;
+    int X_RANGE = 100;
+    int DATA_RANGE = 90;
 
     ArrayList<Entry> xVal;
     LineDataSet setXcomp;
@@ -125,13 +125,13 @@ public class MainActivity extends AppCompatActivity {
         chart.getAxisLeft().setDrawGridLines(false);
         chart.getAxisRight().setDrawGridLines(false);
 
-        chart.getAxisRight().setAxisMinValue(-2.0f);
-        chart.getAxisLeft().setAxisMinValue(-2.0f);
-        chart.getAxisRight().setAxisMaxValue(16.0f);
-        chart.getAxisLeft().setAxisMaxValue(16.0f);
+        chart.getAxisRight().setAxisMinValue(-10.0f);
+        chart.getAxisLeft().setAxisMinValue(-10.0f);
+        chart.getAxisRight().setAxisMaxValue(70.0f);
+        chart.getAxisLeft().setAxisMaxValue(70.0f);
         chart.getXAxis().setEnabled(false);
-        chart.getAxisRight().setEnabled(false);
-        chart.getAxisLeft().setEnabled(false);
+        //chart.getAxisRight().setEnabled(false);
+        //chart.getAxisLeft().setEnabled(false);
         chart.getLegend().setEnabled(false);
 
         xVal = new ArrayList<Entry>();
@@ -140,9 +140,11 @@ public class MainActivity extends AppCompatActivity {
         // 그래프 선 관련 옵션
         setXcomp.setColor(Color.BLUE);
         setXcomp.setDrawValues(false);
-        setXcomp.setDrawCircles(false);
+        setXcomp.setDrawCircles(true);
+        setXcomp.setCircleColor(Color.BLUE);
         setXcomp.setAxisDependency(YAxis.AxisDependency.LEFT);
         setXcomp.setDrawCubic(true);
+        setXcomp.setLineWidth(2); //줄 두께
 
         lineDataSets = new ArrayList<ILineDataSet>();
         lineDataSets.add(setXcomp);
@@ -177,13 +179,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == 0) {
-                double amp = mSensor.getAmplitude();
-                if (amp < 0)
-                    amp = 0;
-                else if (amp > 12)
-                    amp = Math.sqrt(amp - 12) + 12;
-                float amp2 = (float) amp;
-                chartUpdate(amp2);
+                float amp = (float)mSensor.getAmplitude();
+                chartUpdate(amp);
             }
         }
     };
@@ -197,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             while(true) {
                 handler.sendEmptyMessage(0);
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

@@ -69,15 +69,18 @@ public class RecordActivity extends AppCompatActivity {
     private boolean isEndOfSpeech = false;
 
     private DetectNoise mSensor;
+    MyThread thread = new MyThread();
 
     // 차트 관련 선언
     LineChart chart;
-    int X_RANGE = 50;
-    int DATA_RANGE = 30;
+    int X_RANGE = 100;
+    int DATA_RANGE = 100;
 
     ArrayList<Entry> xVal;
+    ArrayList<Entry> xVal2;
     //ArrayList<Entry> yVal;
     LineDataSet setXcomp;
+    LineDataSet setXcomp2;
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
@@ -125,6 +128,7 @@ public class RecordActivity extends AppCompatActivity {
         bt_end = (ImageView) findViewById(R.id.bt_end);
         bt_end.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                mSensor.stop();
 
                 // rms stop
                 sr.stopListening();
@@ -181,8 +185,9 @@ public class RecordActivity extends AppCompatActivity {
     // 녹음 버튼 클릭 이벤트
     public void recordListener(View v) {
 
-        // threadStart(); // 차트에 데이터 넣을 스레드 실행
         mSensor.start();
+        threadStart();
+
         bt_record.setVisibility(View.GONE);
         bt_retry.setVisibility(View.VISIBLE);
 
@@ -201,6 +206,7 @@ public class RecordActivity extends AppCompatActivity {
         bt_record.setEnabled(false);
 
 
+        /*
         final Timer tm = new Timer();
         tm.schedule(new TimerTask() {
             @Override
@@ -213,6 +219,7 @@ public class RecordActivity extends AppCompatActivity {
                 Log.d("앰프", String.valueOf(amp) + ", 카운트: "+String.valueOf(soundCount));
             }
         }, 0, 50);
+        */
 
         // mediaplayer 설정
         mr = MediaPlayer.create(this, R.raw.voice1);
@@ -223,11 +230,13 @@ public class RecordActivity extends AppCompatActivity {
             public void onCompletion(MediaPlayer mp) {
                 mp.stop();
                 mp.release();
-                tm.cancel();
-                tm.purge();
-                mSensor.stop();
+                //tm.cancel();
+                //tm.purge();
+                threadStop();
+                //mSensor.stop();
+                threadRestart();
 
-                SoundAmpGraph(soundAmpList);
+                //SoundAmpGraph(soundAmpList);
 
                 // stt 호출
                 sr.startListening(i_speech);
@@ -235,6 +244,7 @@ public class RecordActivity extends AppCompatActivity {
         });
     }
 
+    /*
     public void SoundAmpGraph(ArrayList<Float> ampList) {
         for(int i=0; i<soundAmpList.size(); i++) {
             xVal.add(new Entry(soundAmpList.get(i), i+1));
@@ -243,9 +253,11 @@ public class RecordActivity extends AppCompatActivity {
         chart.notifyDataSetChanged();
         chart.invalidate();
     }
+    */
 
     // 다시 버튼 클릭 이벤트
     public void replayListener(View v) {
+        mSensor.stop();
         finish();
         // rms stop
         sr.stopListening();
@@ -405,14 +417,14 @@ public class RecordActivity extends AppCompatActivity {
 
         // grid line 비활성화
 
-        chart.getAxisRight().setAxisMinValue(0.0f);
-        chart.getAxisLeft().setAxisMinValue(0.0f);
-        chart.getAxisRight().setAxisMaxValue(100.0f);
-        chart.getAxisLeft().setAxisMaxValue(100.0f);
+        chart.getAxisRight().setAxisMinValue(-10.0f);
+        chart.getAxisLeft().setAxisMinValue(-10.0f);
+        chart.getAxisRight().setAxisMaxValue(70.0f);
+        chart.getAxisLeft().setAxisMaxValue(70.0f);
 
         chart.getXAxis().setDrawGridLines(false);
-        //chart.getAxisLeft().setDrawGridLines(false);
-       // chart.getAxisRight().setDrawGridLines(false);
+        chart.getAxisLeft().setDrawGridLines(false);
+        chart.getAxisRight().setDrawGridLines(false);
 
         chart.getXAxis().setEnabled(false);
 
@@ -426,12 +438,27 @@ public class RecordActivity extends AppCompatActivity {
         // 그래프 선 관련 옵션
         setXcomp.setColor(Color.BLUE);
         setXcomp.setDrawValues(false);
-        setXcomp.setDrawCircles(false);
+        setXcomp.setDrawCircles(true);
+        setXcomp.setCircleColor(Color.BLUE);
         setXcomp.setAxisDependency(YAxis.AxisDependency.LEFT);
         setXcomp.setDrawCubic(true);
+        setXcomp.setLineWidth(2); //줄 두께
+
+        xVal2 = new ArrayList<Entry>();
+        setXcomp2 = new LineDataSet(xVal2, "X2");
+
+        // 그래프 선 관련 옵션
+        setXcomp2.setColor(Color.RED);
+        setXcomp2.setDrawValues(false);
+        setXcomp2.setDrawCircles(true);
+        setXcomp2.setCircleColor(Color.RED);
+        setXcomp2.setAxisDependency(YAxis.AxisDependency.LEFT);
+        setXcomp2.setDrawCubic(true);
+        setXcomp2.setLineWidth(2); //줄 두께
 
         lineDataSets = new ArrayList<ILineDataSet>();
         lineDataSets.add(setXcomp);
+        lineDataSets.add(setXcomp2);
 
 
         xVals = new ArrayList<String>();
@@ -440,22 +467,32 @@ public class RecordActivity extends AppCompatActivity {
         }
 
         lineData = new LineData(xVals,lineDataSets);
+
         chart.setData(lineData);
-        chart.invalidate();
+
     }
 
     // 차트 업데이트 함수
     public void chartUpdate(float x) {
 
+        /*
         if (xVal.size() > DATA_RANGE) {
             xVal.remove(0);
             for (int i = 0; i < DATA_RANGE; i++) {
                 xVal.get(i).setXIndex(i);
             }
         }
-
+        */
         xVal.add(new Entry(x,xVal.size()));
         setXcomp.notifyDataSetChanged();
+        chart.notifyDataSetChanged();
+        chart.invalidate();
+    }
+
+    public void chartUpdate2(float x) {
+
+        xVal2.add(new Entry(x,xVal2.size()));
+        setXcomp2.notifyDataSetChanged();
         chart.notifyDataSetChanged();
         chart.invalidate();
     }
@@ -464,24 +501,63 @@ public class RecordActivity extends AppCompatActivity {
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == 0) {
+            switch(msg.what){
+                case 0:
+                    float amp = (float) mSensor.getAmplitude();
+                    soundAmpList.add(amp);
+                    chartUpdate(amp);
+                    //chartUpdate2(changedRMS);
+                    break;
+                case 1:
+                    thread.stopThread();
+                    break;
+                case 2:
+                    thread.restartThread();
+                    break;
+                case 3:
+                    float amp2 = (float) mSensor.getAmplitude();
+                    chartUpdate2(amp2);
+                    //chartUpdate2(changedRMS);
+                    break;
+
+
+            }
+
+
+           /* if (msg.what == 0) {
                 float amp = (float) mSensor.getAmplitude();
                 soundAmpList.add(amp);
                 chartUpdate(amp);
                 // chartUpdate(changedRMS);
-            }
+            }*/
         }
     };
 
     // 핸들러 상속 구문
     class MyThread extends Thread {
+        boolean stopped = false;
+        boolean restart = false;
+        public void stopThread(){
+            stopped = true;
+        }
+        public void restartThread(){
+            restart = true;
+        }
+
         @Override
         public void run() {
-
-            while(true) {
+            while(stopped == false) {
                 handler.sendEmptyMessage(0);
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            while(restart == true) {
+                handler.sendEmptyMessage(3);
+                try {
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -491,8 +567,16 @@ public class RecordActivity extends AppCompatActivity {
 
     // 쓰레드 시작 함수
     private void threadStart() {
-        MyThread thread = new MyThread();
+        //MyThread thread = new MyThread();
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void threadStop() {
+        handler.sendEmptyMessage(1);
+    }
+
+    private void threadRestart() {
+        handler.sendEmptyMessage(2);
     }
 }
