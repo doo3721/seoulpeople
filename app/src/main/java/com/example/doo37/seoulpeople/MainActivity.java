@@ -125,10 +125,10 @@ public class MainActivity extends AppCompatActivity {
         chart.getAxisLeft().setDrawGridLines(false);
         chart.getAxisRight().setDrawGridLines(false);
 
-        chart.getAxisRight().setAxisMinValue(-10.0f);
-        chart.getAxisLeft().setAxisMinValue(-10.0f);
-        chart.getAxisRight().setAxisMaxValue(70.0f);
-        chart.getAxisLeft().setAxisMaxValue(70.0f);
+        chart.getAxisRight().setAxisMinValue(0.0f);
+        chart.getAxisLeft().setAxisMinValue(0.0f);
+        chart.getAxisRight().setAxisMaxValue(100.0f);
+        chart.getAxisLeft().setAxisMaxValue(100.0f);
         chart.getXAxis().setEnabled(false);
         //chart.getAxisRight().setEnabled(false);
         //chart.getAxisLeft().setEnabled(false);

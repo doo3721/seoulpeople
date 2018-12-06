@@ -72,7 +72,6 @@ public class RecordActivity extends AppCompatActivity {
 
     MyThread thread = new MyThread();
     private DetectNoise mSensor;
-    MyThread thread = new MyThread();
 
     // 차트 관련 선언
     LineChart chart;
@@ -411,10 +410,10 @@ public class RecordActivity extends AppCompatActivity {
 
         // grid line 비활성화
 
-        chart.getAxisRight().setAxisMinValue(-10.0f);
-        chart.getAxisLeft().setAxisMinValue(-10.0f);
-        chart.getAxisRight().setAxisMaxValue(70.0f);
-        chart.getAxisLeft().setAxisMaxValue(70.0f);
+        chart.getAxisRight().setAxisMinValue(0.0f);
+        chart.getAxisLeft().setAxisMinValue(0.0f);
+        chart.getAxisRight().setAxisMaxValue(100.0f);
+        chart.getAxisLeft().setAxisMaxValue(100.0f);
 
         chart.getXAxis().setDrawGridLines(false);
         chart.getAxisLeft().setDrawGridLines(false);
@@ -513,6 +512,7 @@ public class RecordActivity extends AppCompatActivity {
     class MyThread extends Thread {
         boolean stopped = false;
         boolean restart = false;
+
         public void stopThread(){
             stopped = true;
         }
