@@ -59,25 +59,29 @@ public class RecordActivity extends AppCompatActivity {
     ArrayList<String> t_sentences = new ArrayList<>();     // 문장 파일의 문장 배열
     ArrayList<Float> sttRmsList = new ArrayList<>();           // 음성 rms수치 리스트
     ArrayList<Float> soundAmpList = new ArrayList<>();          // 음성파일 amp수치 리스트
-    float changedRMS;
+    float changedRMS = -100;
 
     // soundAmpList와 sttRmsList의 크기를 같게 해주는 요소
     int soundCount = 0;                                 // soundAmpList의 크기를 결정하는 count
     int sttCount = 0;                                   // soundAmpList의 크기를 토대로 sttRmsList의 크기를 결정
-    boolean isSTTReady = false;                       // STT가 준비시 부터 RMS 값을 받게 하기 시작
+    boolean isSTTReady = false;                       // STT 준비 상태
+    int readyCount = 0;                                // 준비와 시작 상태 사이의 대기 카운트
+    boolean isSTTStart = false;                       // STT 시작 상태
 
     private boolean isEndOfSpeech = false;
 
+    MyThread thread = new MyThread();
     private DetectNoise mSensor;
 
     // 차트 관련 선언
     LineChart chart;
-    int X_RANGE = 50;
-    int DATA_RANGE = 30;
+    int RANGE = 100;
+    // int DATA_RANGE =100;
 
     ArrayList<Entry> xVal;
-    //ArrayList<Entry> yVal;
+    ArrayList<Entry> xVal2;
     LineDataSet setXcomp;
+    LineDataSet setXcomp2;
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
@@ -181,14 +185,16 @@ public class RecordActivity extends AppCompatActivity {
     // 녹음 버튼 클릭 이벤트
     public void recordListener(View v) {
 
-        // threadStart(); // 차트에 데이터 넣을 스레드 실행
-        mSensor.start();
         bt_record.setVisibility(View.GONE);
         bt_retry.setVisibility(View.VISIBLE);
 
+        // txt, voice를 저장할 것
+        int txt = R.raw.txt1;
+        int voice = R.raw.voice1;
+
         // 텍스트 호출
         try {
-            is_txt = getResources().openRawResource(R.raw.txt1);
+            is_txt = getResources().openRawResource(txt);
             byte[] b = new byte[is_txt.available()];
             is_txt.read(b);
             v_txt = new String(b);
@@ -200,22 +206,11 @@ public class RecordActivity extends AppCompatActivity {
         tv_sentence.setText(v_txt);
         bt_record.setEnabled(false);
 
-
-        final Timer tm = new Timer();
-        tm.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                ++soundCount;
-                float amp = (float) mSensor.getAmplitude();
-                amp = (float) ((amp - (-30.0)) / (12.0 - (-30.0)) * 100.0);
-                if (amp <= 0) amp = 0.0f;   if(amp >= 100) amp = 100.0f;
-                soundAmpList.add(amp);
-                Log.d("앰프", String.valueOf(amp) + ", 카운트: "+String.valueOf(soundCount));
-            }
-        }, 0, 50);
+        threadStart(); // 차트에 데이터 넣을 스레드 실행
+        mSensor.start();
 
         // mediaplayer 설정
-        mr = MediaPlayer.create(this, R.raw.voice1);
+        mr = MediaPlayer.create(this, voice);
         mr.start();
 
         mr.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -223,25 +218,16 @@ public class RecordActivity extends AppCompatActivity {
             public void onCompletion(MediaPlayer mp) {
                 mp.stop();
                 mp.release();
-                tm.cancel();
-                tm.purge();
+
+                threadStop();
                 mSensor.stop();
 
-                SoundAmpGraph(soundAmpList);
+                threadRestart();
 
                 // stt 호출
                 sr.startListening(i_speech);
             }
         });
-    }
-
-    public void SoundAmpGraph(ArrayList<Float> ampList) {
-        for(int i=0; i<soundAmpList.size(); i++) {
-            xVal.add(new Entry(soundAmpList.get(i), i+1));
-        }
-        setXcomp.notifyDataSetChanged();
-        chart.notifyDataSetChanged();
-        chart.invalidate();
     }
 
     // 다시 버튼 클릭 이벤트
@@ -263,19 +249,36 @@ public class RecordActivity extends AppCompatActivity {
 
         @Override
         public void onBeginningOfSpeech() {
+            isSTTStart = true;
             Log.d("메세지: ", "시작");
         }
 
         @Override
         public void onRmsChanged(float v) {
-            float rms = (float) ((v - (-2.0)) / (10.0 - (-2.0)) * 100.0);
-            if (rms <= 0) rms = 0.0f;   if(rms >= 100) rms = 100.0f;
-            if(isSTTReady && (sttCount < soundCount)) {
-                ++sttCount;
-                sttRmsList.add(v);
-                changedRMS = v;
-                Log.d("R-RMS:", " " + rms + ", 카운트: " + String.valueOf(sttCount));
+            float rms = -100;
+
+            // STT 시작전 대기
+            if(isSTTReady && !isSTTStart) {
+                if (readyCount > 5) {
+                    rms = 0;
+                    ++sttCount;
+                    sttRmsList.add(rms);
+                }
+                else {
+                    readyCount++;
+                }
             }
+
+            // STT 시작
+            if(isSTTStart && (sttCount < soundCount)) {
+                rms = (float) ((v - (-2.0)) / (10.0 - (-2.0)) * 100.0);
+                if (rms <= 0) rms = 0.0f;   if(rms >= 100) rms = 100.0f;
+                ++sttCount;
+                sttRmsList.add(rms);
+            }
+
+            changedRMS = rms;
+            Log.d("R-RMS:", " " + rms + ", 카운트: " + String.valueOf(sttCount));
         }
 
         @Override
@@ -422,40 +425,54 @@ public class RecordActivity extends AppCompatActivity {
 
         xVal = new ArrayList<Entry>();
         setXcomp = new LineDataSet(xVal, "X");
+        xVal2 = new ArrayList<Entry>();
+        setXcomp2 = new LineDataSet(xVal2, "X2");
 
         // 그래프 선 관련 옵션
         setXcomp.setColor(Color.BLUE);
         setXcomp.setDrawValues(false);
-        setXcomp.setDrawCircles(false);
+        setXcomp.setDrawCircles(true);
+        setXcomp.setCircleColor(Color.BLUE);
         setXcomp.setAxisDependency(YAxis.AxisDependency.LEFT);
         setXcomp.setDrawCubic(true);
+        setXcomp.setLineWidth(2); //줄 두께
+
+        setXcomp2.setColor(Color.RED);
+        setXcomp2.setDrawValues(false);
+        setXcomp2.setDrawCircles(true);
+        setXcomp2.setCircleColor(Color.RED);
+        setXcomp2.setAxisDependency(YAxis.AxisDependency.LEFT);
+        setXcomp2.setDrawCubic(true);
+        setXcomp2.setLineWidth(2); //줄 두께
 
         lineDataSets = new ArrayList<ILineDataSet>();
         lineDataSets.add(setXcomp);
+        lineDataSets.add(setXcomp2);
 
 
         xVals = new ArrayList<String>();
-        for (int i = 0; i < X_RANGE; i++) {
+        for (int i = 0; i < RANGE; i++) {
             xVals.add("");
         }
 
         lineData = new LineData(xVals,lineDataSets);
         chart.setData(lineData);
-        chart.invalidate();
+        //chart.invalidate();
     }
 
     // 차트 업데이트 함수
-    public void chartUpdate(float x) {
+    public void chartUpdate(float v) {
 
-        if (xVal.size() > DATA_RANGE) {
-            xVal.remove(0);
-            for (int i = 0; i < DATA_RANGE; i++) {
-                xVal.get(i).setXIndex(i);
-            }
-        }
-
-        xVal.add(new Entry(x,xVal.size()));
+        xVal.add(new Entry(v,xVal.size()));
         setXcomp.notifyDataSetChanged();
+        chart.notifyDataSetChanged();
+        chart.invalidate();
+    }
+
+    public void chartUpdate2(float v) {
+
+        xVal2.add(new Entry(v,xVal2.size()));
+        setXcomp2.notifyDataSetChanged();
         chart.notifyDataSetChanged();
         chart.invalidate();
     }
@@ -464,24 +481,55 @@ public class RecordActivity extends AppCompatActivity {
     Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            if (msg.what == 0) {
-                float amp = (float) mSensor.getAmplitude();
-                soundAmpList.add(amp);
-                chartUpdate(amp);
-                // chartUpdate(changedRMS);
+            switch(msg.what){
+                case 0:
+                    ++soundCount;
+                    float amp = (float) mSensor.getAmplitude();
+                    amp = (float) ((amp - (-20.0)) / (12.0 - (-20.0)) * 100.0);
+                    if (amp <= 0) amp = 0.0f;   if(amp >= 100) amp = 100.0f;
+                    soundAmpList.add(amp);
+                    Log.d("앰프", String.valueOf(amp) + ", 카운트: "+String.valueOf(soundCount));
+                    chartUpdate(amp);
+                    break;
+                case 1:
+                    thread.stopThread();
+                    break;
+                case 2:
+                    thread.restartThread();
+                    break;
+                case 3:
+                    if((changedRMS >= 0.0f) && (sttCount < soundCount))
+                        chartUpdate2(changedRMS);
+                    break;
             }
         }
     };
 
     // 핸들러 상속 구문
     class MyThread extends Thread {
+        boolean stopped = false;
+        boolean restart = false;
+        public void stopThread(){
+            stopped = true;
+        }
+        public void restartThread(){
+            restart = true;
+        }
+
         @Override
         public void run() {
-
-            while(true) {
+            while(stopped == false) {
                 handler.sendEmptyMessage(0);
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            while(restart == true) {
+                handler.sendEmptyMessage(3);
+                try {
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -491,8 +539,15 @@ public class RecordActivity extends AppCompatActivity {
 
     // 쓰레드 시작 함수
     private void threadStart() {
-        MyThread thread = new MyThread();
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private void threadStop() {
+        handler.sendEmptyMessage(1);
+    }
+
+    private void threadRestart() {
+        handler.sendEmptyMessage(2);
     }
 }
