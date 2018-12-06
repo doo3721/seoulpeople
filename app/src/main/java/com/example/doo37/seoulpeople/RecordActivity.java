@@ -1,6 +1,8 @@
 package com.example.doo37.seoulpeople;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
@@ -10,6 +12,7 @@ import android.speech.SpeechRecognizer;
 import android.speech.RecognizerIntent;
 import android.speech.RecognitionListener;
 import android.content.Intent;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Spannable;
@@ -18,6 +21,7 @@ import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +38,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.w3c.dom.Text;
+
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -67,15 +73,17 @@ public class RecordActivity extends AppCompatActivity {
     boolean isSTTReady = false;                       // STT 준비 상태
     int readyCount = 0;                                // 준비와 시작 상태 사이의 대기 카운트
     boolean isSTTStart = false;                       // STT 시작 상태
-
     private boolean isEndOfSpeech = false;
+
+    int res_num = 0;
+    boolean isNumSelect = false;
 
     MyThread thread = new MyThread();
     private DetectNoise mSensor;
 
     // 차트 관련 선언
     LineChart chart;
-    int RANGE = 100;
+    int RANGE = 150;
     // int DATA_RANGE =100;
 
     ArrayList<Entry> xVal;
@@ -167,6 +175,34 @@ public class RecordActivity extends AppCompatActivity {
         init(); // 차트 생성 및 옵션 부여
     }
 
+    /*
+    // 문장 선택 다이얼로그
+    public void ResSelectDialog()
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("문장 선택");
+        builder.setMessage("문장 번호를 입력하세요(1~45)");
+        final EditText edittext = new EditText(this);
+        builder.setView(edittext);
+        builder.setPositiveButton("입력",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        res_num = Integer.parseInt(edittext.getText().toString());
+                        isNumSelect = true;
+                    }
+                });
+        builder.setNegativeButton("취소",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(RecordActivity.this, "번호를 입력해 주세요.", Toast.LENGTH_SHORT);
+                    }
+                });
+        builder.show();
+    }
+     */
+
+
+
     public void setstdsLength(int stdsLength){
         this.stdsLength = stdsLength;
     }
@@ -189,13 +225,29 @@ public class RecordActivity extends AppCompatActivity {
         bt_record.setVisibility(View.GONE);
         bt_retry.setVisibility(View.VISIBLE);
 
-        // txt, voice를 저장할 것
-        int txt = R.raw.txt1;
-        int voice = R.raw.voice1;
+        Resources res = mContext.getResources();
+        String packageName = mContext.getPackageName();
+
+        /*
+        // 문장 선택하는 다이얼로그 호출
+        while(!isNumSelect) {
+            ResSelectDialog();
+        }
+         */
+
+
+        // 문장 랜덤 호출
+        res_num = (int) (Math.random() * 45 +1);
+
+        String s_txt = String.format("txt%d", res_num);
+        String s_voice = String.format("voice%d", res_num);
+
+        int txt_id = res.getIdentifier(s_txt, "raw", packageName);
+        int voice_id = res.getIdentifier(s_voice,"raw", packageName);
 
         // 텍스트 호출
         try {
-            is_txt = getResources().openRawResource(txt);
+            is_txt = getResources().openRawResource(txt_id);
             byte[] b = new byte[is_txt.available()];
             is_txt.read(b);
             v_txt = new String(b);
@@ -211,7 +263,7 @@ public class RecordActivity extends AppCompatActivity {
         mSensor.start();
 
         // mediaplayer 설정
-        mr = MediaPlayer.create(this, voice);
+        mr = MediaPlayer.create(this, voice_id);
         mr.start();
 
         mr.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
