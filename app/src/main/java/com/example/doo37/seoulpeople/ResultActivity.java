@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -53,6 +54,9 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
+    ArrayList<Entry> xVal2;
+    LineDataSet setXcomp2;
+    ArrayList<String> xVals2;
 
     // 누적 결과 차트 관련 선언
     BarChart barchart;
@@ -71,11 +75,13 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
     String sentenceConsistency = "";
 
     // 음성 일치율 검사를 위한 변수 목록
-    // TODO: 음성 일치율 계산
+    ArrayList<Float> sttRmsList = new ArrayList<>();           // 음성 rms수치 리스트
+    ArrayList<Float> soundAmpList = new ArrayList<>();          // 음성파일 amp수치 리스트
 
     // 데이터 누적을 위한 변수 목록
     private int indexi = 0;
     SQLiteDatabase sqliteDB ;
+    int numi = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +112,12 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         float stdsLength = ((RecordActivity)RecordActivity.mContext).getstdsLength();
         float usrsLength = ((RecordActivity)RecordActivity.mContext).getusrsLength();
 
+        ArrayList<Float> soundAmpList = ((RecordActivity)RecordActivity.mContext).getstdsentence();
+        ArrayList<Float> sttRmsList = ((RecordActivity)RecordActivity.mContext).getusrsentence();
+
+        soundAmpListGraph(soundAmpList);
+        sttRmsListGraph(sttRmsList);
+
         // 일치율 테스트 함수 반환값을 테스트하기 위한 테스트코드
         /*
         String temp = String.valueOf(stdsLength);
@@ -120,9 +132,50 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         Toast.makeText(getApplication(), sentenceConsistency +"%", Toast.LENGTH_LONG).show();
         sentencediffv.setText(sentenceConsistency +"%");
 
-        save_values(sentenceConsistency);
+        save_values(soundAmpList, sttRmsList, sentenceConsistency);
 
         // 누적 데이터 관련 SQLite 관리 부분
+    }
+    public void LoadAmpGraph(String AmpList) {
+
+        String[] array = AmpList.split(" ");
+        for(int i=0; i<array.length; i++) {
+            xVal.add(new Entry(Float.parseFloat(array[i]), i+1));
+            //Toast.makeText(getApplication(), array[i], Toast.LENGTH_LONG).show();
+        }
+        setXcomp.notifyDataSetChanged();
+        linechart.notifyDataSetChanged();
+        linechart.invalidate();
+    }
+
+    public void LoadRmsGraph(String RmsList) {
+
+        String[] array = RmsList.split(" ");
+        for(int i=0; i<array.length; i++) {
+            xVal2.add(new Entry(Float.parseFloat(array[i]), i+1));
+            //Toast.makeText(getApplication(), array[i], Toast.LENGTH_LONG).show();
+        }
+        setXcomp2.notifyDataSetChanged();
+        linechart.notifyDataSetChanged();
+        linechart.invalidate();
+    }
+
+    public void soundAmpListGraph(ArrayList<Float> soundAmpList) {
+        for(int i=0; i<soundAmpList.size(); i++) {
+            xVal.add(new Entry(soundAmpList.get(i), i+1));
+        }
+        setXcomp.notifyDataSetChanged();
+        linechart.notifyDataSetChanged();
+        linechart.invalidate();
+    }
+
+    public void sttRmsListGraph(ArrayList<Float> sttRmsList) {
+        for(int i=0; i<sttRmsList.size(); i++) {
+            xVal2.add(new Entry(sttRmsList.get(i), i+1));
+        }
+        setXcomp2.notifyDataSetChanged();
+        linechart.notifyDataSetChanged();
+        linechart.invalidate();
     }
 
     private SQLiteDatabase init_database() {
@@ -148,8 +201,10 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         // 테이블 처음 생성시 초기화
         if (sqliteDB != null) {
             String sqlCreateTbl = "CREATE TABLE IF NOT EXISTS CONTACT_T (" +
+                    "numi " + "INTEGER NOT NULL," +
                     "savedate " + "TEXT NOT NULL," +
-                    "voiceC " + "TEXT NOT NULL," +
+                    "AmpList " + "TEXT NOT NULL," +
+                    "RmsList " + "TEXT NOT NULL," +
                     "sentenceC " + "TEXT NOT NULL" + ")";
 
             System.out.println(sqlCreateTbl);
@@ -171,20 +226,23 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
             cursor = sqliteDB.rawQuery(sqlQueryTbl, null);
             cursor.moveToFirst();
 
-            do {
+            while (cursor.moveToNext()) {
                 // 레코드가 존재한다면,
 
                 // 값 가져오기.
-                String date = cursor.getString(0);
-                // TODO: 액티비티 로드 시 barchart 에 표시될 데이터 로드하기
-                String voiceC = cursor.getString(1);
-                String sentenceC = cursor.getString(2);
+                int numi = cursor.getInt(0);
+                String date = cursor.getString(1);
+                String AmpList = cursor.getString(2);
+                String RmsList = cursor.getString(3);
+                String sentenceC = cursor.getString(4);
 
                 xAxis.add(date);
                 BarEntry newdata = new BarEntry(Float.parseFloat(sentenceC), indexi); // (value, x index)
                 valueSet.add(newdata);
                 indexi++;
-            } while (cursor.moveToNext());
+            }
+
+            numi = indexi;
 
             cursor.close();
 
@@ -196,7 +254,7 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         }
     }
 
-    private void save_values(String sentenceConsistency) {
+    private void save_values(ArrayList<Float> soundAmpList, ArrayList<Float> sttRmsList, String sentenceConsistency) {
         //TODO: 수행 결과를 데이터베이스에 추가하기.
 
         if (sqliteDB != null) {
@@ -212,14 +270,19 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
 
             // 임시로 임의 값을 string화 해서 저장
             // TODO: 실제 음성 값을 처리할 것
-            String voiceC = "3217";
+
+            String AmpList = TextUtils.join(" ", soundAmpList);
+
+            String RmsList = TextUtils.join(" ", sttRmsList);
 
             String sentenceC = sentenceConsistency;
 
             String sqlInsert = "INSERT INTO CONTACT_T " +
-                    "(savedate, voiceC, sentenceC) VALUES (" +
+                    "(numi,savedate, AmpList, RmsList, sentenceC) VALUES (" +
+                    Integer.toString(numi) + "," +
                     "'" + savedate + "'," +
-                    "'" + voiceC + "'," +
+                    "'" + AmpList + "'," +
+                    "'" + RmsList + "'," +
                     "'" + sentenceC + "')" ;
 
             System.out.println(sqlInsert) ;
@@ -259,6 +322,9 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         xVal = new ArrayList<Entry>();
         setXcomp = new LineDataSet(xVal, "X");
 
+        xVal2 = new ArrayList<Entry>();
+        setXcomp2 = new LineDataSet(xVal2, "X");
+
         // 그래프 선 관련 옵션
         setXcomp.setColor(Color.BLUE);
         setXcomp.setDrawValues(false);
@@ -266,15 +332,25 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
         setXcomp.setAxisDependency(YAxis.AxisDependency.LEFT);
         setXcomp.setDrawCubic(true);
 
+        // 그래프 선 관련 옵션
+        setXcomp2.setColor(Color.RED);
+        setXcomp2.setDrawValues(false);
+        setXcomp2.setDrawCircles(false);
+        setXcomp2.setAxisDependency(YAxis.AxisDependency.LEFT);
+        setXcomp2.setDrawCubic(true);
+
         lineDataSets = new ArrayList<ILineDataSet>();
         lineDataSets.add(setXcomp);
+        lineDataSets.add(setXcomp2);
 
         xVals = new ArrayList<String>();
         for (int i = 0; i < X_RANGE; i++) {
             xVals.add("");
         }
+
         lineData = new LineData(xVals,lineDataSets);
         linechart.setData(lineData);
+
         linechart.invalidate();
 
         // Bar 차트 관련 옵션
@@ -325,33 +401,30 @@ public class ResultActivity extends AppCompatActivity implements OnChartValueSel
 
 
         if (sqliteDB != null) {
-            String sqlQueryTbl = "SELECT * FROM CONTACT_T" + " WHERE sentenceC =" + e.getVal();
+            String sqlQueryTbl = "SELECT * FROM CONTACT_T" + " WHERE numi =" + e.getXIndex();
 
             Cursor cursor = null;
-
-            dataSets = null;
-            valueSet = new ArrayList<>();
-            indexi = 0;
-            xAxis = new ArrayList<>();
 
             // 쿼리 실행
             cursor = sqliteDB.rawQuery(sqlQueryTbl, null);
             if(cursor.moveToFirst()){
-                String date = cursor.getString(0);
-                String voiceC = cursor.getString(1);
-                String sentenceC = cursor.getString(2);
-                xAxis.add(date);
-                BarEntry newdata = new BarEntry(Float.parseFloat(sentenceC), 1); // (value, x index)
-                valueSet.add(newdata);
+                int numi = cursor.getInt(0);
+                String savedate = cursor.getString(1);
+                String AmpList = cursor.getString(2);
+                String RmsList = cursor.getString(3);
+                String sentenceC = cursor.getString(4);
+
+                linechart.clearValues();
+                linechart.invalidate();
+                chartInit();
+
+                LoadAmpGraph(AmpList);
+                LoadRmsGraph(RmsList);
+
                 sentencediffv.setText(sentenceC +"%");
             }
             cursor.close();
 
-            BarDataSet barDataSet = new BarDataSet(valueSet, "");
-            barDataSet.setColors(ColorTemplate.COLORFUL_COLORS);
-
-            dataSets = new ArrayList<>();
-            dataSets.add(barDataSet);
         }
 
     }

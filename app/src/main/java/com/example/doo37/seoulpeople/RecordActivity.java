@@ -137,8 +137,11 @@ public class RecordActivity extends AppCompatActivity {
         bt_end = (ImageView) findViewById(R.id.bt_end);
         bt_end.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mSensor.stop();
 
+                setstdsentence(soundAmpList);
+                setusrsentence(sttRmsList);
+
+                mSensor.stop();
                 // rms stop
                 sr.stopListening();
                 finish();
@@ -219,6 +222,22 @@ public class RecordActivity extends AppCompatActivity {
         return usrsLength;
     }
 
+    public void setstdsentence(ArrayList<Float> soundAmpList){
+        this.soundAmpList = soundAmpList;
+    }
+
+    public void setusrsentence(ArrayList<Float> sttRmsList) { this.sttRmsList = sttRmsList; }
+
+    public ArrayList<Float> getstdsentence(){
+        return soundAmpList;
+    }
+
+    public ArrayList<Float> getusrsentence(){
+        return sttRmsList;
+    }
+
+
+
     // 녹음 버튼 클릭 이벤트
     public void recordListener(View v) {
 
@@ -286,8 +305,10 @@ public class RecordActivity extends AppCompatActivity {
     public void replayListener(View v) {
         mSensor.stop();
         finish();
+
         // rms stop
         sr.stopListening();
+
         startActivity(new Intent(this, RecordActivity.class));
         this.overridePendingTransition(0, 0);
     }
