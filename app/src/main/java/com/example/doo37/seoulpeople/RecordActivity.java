@@ -58,6 +58,7 @@ public class RecordActivity extends AppCompatActivity {
     private ImageView bt_record;
     private ImageView bt_retry;
     private ImageView bt_end;
+
     private SpeechRecognizer sr;
     private MediaPlayer mr;
     private InputStream is_txt;
@@ -75,6 +76,7 @@ public class RecordActivity extends AppCompatActivity {
     boolean isSTTStart = false;                       // STT 시작 상태
     private boolean isEndOfSpeech = false;
 
+    // 문장 (랜덤)선택을 위한 요소
     int res_num = 0;
     boolean isNumSelect = false;
 
@@ -86,6 +88,7 @@ public class RecordActivity extends AppCompatActivity {
     int RANGE = 150;
     // int DATA_RANGE =100;
 
+    //차트 데이터 관련 선언
     ArrayList<Entry> xVal;
     ArrayList<Entry> xVal2;
     LineDataSet setXcomp;
@@ -93,8 +96,6 @@ public class RecordActivity extends AppCompatActivity {
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
-
-    private final int MY_AUDIOSESSION = 0;
 
     // 문자열 매칭 알고리즘 선언부
     diff_match_patch dmp = new diff_match_patch();
@@ -112,10 +113,11 @@ public class RecordActivity extends AppCompatActivity {
     private int stdsLength;
     private int usrsLength;
 
+    SpannableStringBuilder ssb = new SpannableStringBuilder();
+
     // 음성 일치율 검사를 위한 변수 목록
     // TODO: 음성 일치율 계산
 
-    SpannableStringBuilder ssb = new SpannableStringBuilder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -32,14 +32,18 @@ public class MainActivity extends AppCompatActivity {
     int X_RANGE = 100;
     int DATA_RANGE = 90;
 
+    // 차트 데이터 관련 선언
     ArrayList<Entry> xVal;
     LineDataSet setXcomp;
     ArrayList<String> xVals;
     ArrayList<ILineDataSet> lineDataSets;
     LineData lineData;
 
+    // 음성 관련 선언
     private DetectNoise mSensor;
     private Context ct = this;
+
+    // Permission 관련 선언
     private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
 
     @Override
