@@ -219,7 +219,6 @@ public class RecordActivity extends AppCompatActivity {
             public void onCompletion(MediaPlayer mp) {
                 mp.stop();
                 mp.release();
-
                 threadStop();
                 mSensor.stop();
 

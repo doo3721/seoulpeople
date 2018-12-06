@@ -179,7 +179,9 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == 0) {
-                float amp = (float)mSensor.getAmplitude();
+                float amp = (float) mSensor.getAmplitude();
+                amp = (float) ((amp - (-20.0)) / (12.0 - (-20.0)) * 100.0);
+                if (amp <= 0) amp = 0.0f;   if(amp >= 100) amp = 100.0f;
                 chartUpdate(amp);
             }
         }
