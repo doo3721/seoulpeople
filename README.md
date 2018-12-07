@@ -37,7 +37,47 @@ These instructions will get you a copy of the project up and running on your mob
 
 you can release apk file on your IDE, or just see the below video!
 
-![build-test](https://media.giphy.com/media/28FYueK7hXC1XF2lxc/giphy.gif)
+![build-test](https://media.giphy.com/media/5WkBtuHtdHE30mLSXt/giphy.gif)
+
+in app, you can find like this method
+
+```java
+// Voice Recg
+private DetectNoise mSensor;
+
+// in recordactivity.java
+float amp = (float) mSensor.getAmplitude();
+                    amp = (float) ((amp - (-20.0)) / (12.0 - (-20.0)) * 100.0);
+                    if (amp <= 0) amp = 0.0f;   if(amp >= 100) amp = 100.0f;
+                    soundAmpList.add(amp);
+
+// for sentence analyze
+i_speech = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+i_speech.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+i_speech.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
+i_speech.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ko-KR");
+```
+
+Data sava and load method in resultactivity.java
+```sql
+    private void init_tables() {
+        // 테이블 처음 생성시 초기화
+        if (sqliteDB != null) {
+            String sqlCreateTbl = "CREATE TABLE IF NOT EXISTS CONTACT_T (" +
+                    "numi " + "INTEGER NOT NULL," +
+                    "savedate " + "TEXT NOT NULL," +
+                    "AmpList " + "TEXT NOT NULL," +
+                    "RmsList " + "TEXT NOT NULL," +
+                    "sentenceC " + "TEXT NOT NULL" + ")";
+
+            System.out.println(sqlCreateTbl);
+            sqliteDB.execSQL(sqlCreateTbl);
+        }
+    }
+```
+
+We use sentence analyze with google diff_patch_match algorithms, which is
+[https://github.com/google/diff-match-patch](https://github.com/google/diff-match-patch "https://github.com/google/diff-match-patch")
 
 ---
 
